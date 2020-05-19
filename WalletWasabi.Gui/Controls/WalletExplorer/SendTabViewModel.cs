@@ -3,7 +3,6 @@ using NBitcoin.Payment;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using WalletWasabi.Blockchain.TransactionBuilding;
 using WalletWasabi.Blockchain.Transactions;
@@ -11,11 +10,11 @@ using WalletWasabi.Gui.Helpers;
 using WalletWasabi.Gui.Models.StatusBarStatuses;
 using WalletWasabi.Gui.ViewModels;
 using WalletWasabi.Hwi;
-using WalletWasabi.Hwi.Exceptions;
 using WalletWasabi.Models;
 using WalletWasabi.Wallets;
 using WalletWasabi.WebClients.PayJoin;
 using WalletWasabi.Gui.Validation;
+using WalletWasabi.Interfaces;
 
 namespace WalletWasabi.Gui.Controls.WalletExplorer
 {
@@ -30,52 +29,21 @@ namespace WalletWasabi.Gui.Controls.WalletExplorer
 
 		public override string DoButtonText => "Send Transaction";
 		public override string DoingButtonText => "Sending Transaction...";
-
-		protected override async Task BuildTransaction(string password, PaymentIntent payments, FeeStrategy feeStrategy, bool allowUnconfirmed = false, IEnumerable<OutPoint> allowedInputs = null)
-		{
-			BuildTransactionResult result = await Task.Run(() => Wallet.BuildTransaction(Password, payments, feeStrategy, allowUnconfirmed: true, allowedInputs: allowedInputs, GetPayjoinClient()));
-
-			MainWindowViewModel.Instance.StatusBar.TryAddStatus(StatusType.SigningTransaction);
-			SmartTransaction signedTransaction = result.Transaction;
-
-			if (Wallet.KeyManager.IsHardwareWallet && !result.Signed) // If hardware but still has a privkey then it's password, then meh.
-			{
-				try
-				{
-					IsHardwareBusy = true;
-					MainWindowViewModel.Instance.StatusBar.TryAddStatus(StatusType.AcquiringSignatureFromHardwareWallet);
-					var client = new HwiClient(Global.Network);
-
-					using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-					PSBT signedPsbt = null;
-					try
-					{
-						signedPsbt = await client.SignTxAsync(Wallet.KeyManager.MasterFingerprint.Value, result.Psbt, cts.Token);
-					}
-					catch (HwiException)
-					{
-						await PinPadViewModel.UnlockAsync();
-						signedPsbt = await client.SignTxAsync(Wallet.KeyManager.MasterFingerprint.Value, result.Psbt, cts.Token);
-					}
-					signedTransaction = signedPsbt.ExtractSmartTransaction(result.Transaction);
-				}
-				finally
-				{
-					MainWindowViewModel.Instance.StatusBar.TryRemoveStatus(StatusType.AcquiringSignatureFromHardwareWallet);
-					IsHardwareBusy = false;
-				}
-			}
-
-			MainWindowViewModel.Instance.StatusBar.TryAddStatus(StatusType.BroadcastingTransaction);
-			await Task.Run(async () => await Global.TransactionBroadcaster.SendTransactionAsync(signedTransaction));
-
-			ResetUi();
-		}
-
 		public string PayjoinEndPoint
 		{
 			get => _payjoinEndPoint;
 			set => this.RaiseAndSetIfChanged(ref _payjoinEndPoint, value);
+		}
+		protected override async Task BuildTransaction(string password, PaymentIntent payments, FeeStrategy feeStrategy, bool allowUnconfirmed = false, IEnumerable<OutPoint> allowedInputs = null)
+		{
+			BuildTransactionResult result = await Task.Run(() => Wallet.BuildTransaction(Password, payments, feeStrategy, allowUnconfirmed: true, allowedInputs: allowedInputs, GetPayjoinClient(), GetSigner()));
+
+			MainWindowViewModel.Instance.StatusBar.TryAddStatus(StatusType.SigningTransaction);
+			SmartTransaction signedTransaction = result.Transaction;
+			MainWindowViewModel.Instance.StatusBar.TryAddStatus(StatusType.BroadcastingTransaction);
+			await Task.Run(async () => await Global.TransactionBroadcaster.SendTransactionAsync(signedTransaction));
+
+			ResetUi();
 		}
 
 		private IPayjoinClient GetPayjoinClient()
@@ -117,6 +85,13 @@ namespace WalletWasabi.Gui.Controls.WalletExplorer
 		{
 			base.ResetUi();
 			PayjoinEndPoint = "";
+		}
+
+		private IPsbtSigner GetSigner()
+		{
+			return Wallet.KeyManager.IsHardwareWallet
+				? new HwiPsbtSigner(new HwiClient(Global.Network), b => IsHardwareBusy = b)
+				: null;
 		}
 	}
 }

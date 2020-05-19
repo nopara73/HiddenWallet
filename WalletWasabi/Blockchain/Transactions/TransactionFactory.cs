@@ -12,6 +12,7 @@ using WalletWasabi.Blockchain.TransactionBuilding;
 using WalletWasabi.Blockchain.TransactionOutputs;
 using WalletWasabi.Exceptions;
 using WalletWasabi.Helpers;
+using WalletWasabi.Interfaces;
 using WalletWasabi.Logging;
 using WalletWasabi.Models;
 using WalletWasabi.WebClients.PayJoin;
@@ -43,18 +44,19 @@ namespace WalletWasabi.Blockchain.Transactions
 			PaymentIntent payments,
 			FeeRate feeRate,
 			IEnumerable<OutPoint> allowedInputs = null,
-			IPayjoinClient payjoinClient = null)
-			=> BuildTransaction(payments, () => feeRate, allowedInputs, () => LockTime.Zero, payjoinClient);
+			IPayjoinClient payjoinClient = null,
+			IPsbtSigner psbtSigner = null)
+			=> BuildTransaction(payments, () => feeRate, allowedInputs, () => LockTime.Zero, payjoinClient, psbtSigner);
 
 		/// <exception cref="ArgumentException"></exception>
 		/// <exception cref="ArgumentNullException"></exception>
 		/// <exception cref="ArgumentOutOfRangeException"></exception>
-		public BuildTransactionResult BuildTransaction(
-			PaymentIntent payments,
+		public BuildTransactionResult BuildTransaction(PaymentIntent payments,
 			Func<FeeRate> feeRateFetcher,
 			IEnumerable<OutPoint> allowedInputs = null,
 			Func<LockTime> lockTimeSelector = null,
-			IPayjoinClient payjoinClient = null)
+			IPayjoinClient payjoinClient = null, 
+			IPsbtSigner psbtSigner = null)
 		{
 			payments = Guard.NotNull(nameof(payments), payments);
 			lockTimeSelector ??= () => LockTime.Zero;
@@ -216,27 +218,31 @@ namespace WalletWasabi.Blockchain.Transactions
 			// It must be watch only, too, because if we have the key and also hardware wallet, we do not care we can sign.
 
 			Transaction tx = null;
-			if (KeyManager.IsWatchOnly)
+			psbtSigner ??= new DefaultPSBTSigner(Password, spentCoins, builder, lockTimeSelector);
+			UpdatePSBTInfo(psbt, spentCoins, changeHdPubKey);
+			var signedPSBT = psbtSigner.TrySign(psbt, KeyManager, CancellationToken.None).GetAwaiter().GetResult();
+			if (signedPSBT is null)
 			{
 				tx = psbt.GetGlobalTransaction();
 			}
 			else
 			{
-				IEnumerable<ExtKey> signingKeys = KeyManager.GetSecrets(Password, spentCoins.Select(x => x.ScriptPubKey).ToArray());
-				builder = builder.AddKeys(signingKeys.ToArray());
-				builder.SetLockTime(lockTimeSelector());
-				builder.SignPSBT(psbt);
-
-				UpdatePSBTInfo(psbt, spentCoins, changeHdPubKey);
-
-				if (!KeyManager.IsWatchOnly)
+				psbt = signedPSBT;
+				
+				// Try to pay using payjoin if available
+				if (payjoinClient is {})
 				{
-					// Try to pay using payjoin
-					if (payjoinClient is { })
+					var signedPayjoinPsbt = TryNegotiatePayjoin(payjoinClient, psbt, psbtSigner, CancellationToken.None)
+						.GetAwaiter().GetResult();
+					if (signedPayjoinPsbt != null)
 					{
-						psbt = TryNegotiatePayjoin(payjoinClient, builder, psbt);
+						//TODO: Schedule signedPsbt to be broadcast in 2 mins
+						psbt = signedPayjoinPsbt;
+
+						UpdatePSBTInfo(psbt, spentCoins, changeHdPubKey);
 					}
 				}
+
 				psbt.Finalize();
 				tx = psbt.ExtractTransaction();
 
@@ -307,19 +313,30 @@ namespace WalletWasabi.Blockchain.Transactions
 			return new BuildTransactionResult(new SmartTransaction(tx, Height.Unknown), psbt, spendsUnconfirmed, sign, fee, feePc, outerWalletOutputs, innerWalletOutputs, spentCoins);
 		}
 
-		private PSBT TryNegotiatePayjoin(IPayjoinClient payjoinClient, TransactionBuilder builder, PSBT psbt)
+		private async Task<PSBT> TryNegotiatePayjoin(IPayjoinClient payjoinClient, PSBT psbt, IPsbtSigner psbtSigner,
+			CancellationToken cancellationToken)
 		{
 			try
 			{
 				Logger.LogInfo($"Negotiating payjoin payment with `{payjoinClient.PaymentUrl}`.");
 
-				psbt = payjoinClient.RequestPayjoin(psbt,
+				psbt = await payjoinClient.RequestPayjoin(psbt,
 					KeyManager.ExtPubKey,
-					new RootedKeyPath(KeyManager.MasterFingerprint.Value, KeyManager.DefaultAccountKeyPath),
-					CancellationToken.None).GetAwaiter().GetResult();
-				builder.SignPSBT(psbt);
+					new RootedKeyPath(KeyManager.MasterFingerprint.Value, KeyManager.AccountKeyPath),
+					cancellationToken);
+				if (psbt is null)
+				{
+					return null;
+				}
 
+				var signedPayjoinPsbt = await psbtSigner.TrySign(psbt, KeyManager, cancellationToken);
+				if (signedPayjoinPsbt is null)
+				{
+					Logger.LogWarning($"Payjoin PSBT could not be signed. Ignoring...");
+					return null;
+				}
 				Logger.LogInfo($"Payjoin payment was negotiated successfully.");
+				return signedPayjoinPsbt;
 			}
 			catch (TorSocks5FailureResponseException e)
 			{
@@ -337,8 +354,13 @@ namespace WalletWasabi.Blockchain.Transactions
 			{
 				Logger.LogWarning($"Payjoin server responded with {e.Message}. Ignoring...");
 			}
+			catch (Exception e)
+			{
+				Logger.LogError($"Payjoin payment ran into an issue {e.Message}. Ignoring...");
+				//the show must go on. There is a chance that the transaction was received or exposed to the receiver or listening third-party. Not attempting to broadcast the original now leave you vulnerable to the tx being broadcasted eventually.
+			}
 
-			return psbt;
+			return null;
 		}
 
 		private void UpdatePSBTInfo(PSBT psbt, SmartCoin[] spentCoins, HdPubKey changeHdPubKey)

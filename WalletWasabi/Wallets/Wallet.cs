@@ -27,6 +27,7 @@ using WalletWasabi.CoinJoin.Client.Clients;
 using WalletWasabi.CoinJoin.Client.Clients.Queuing;
 using WalletWasabi.Exceptions;
 using WalletWasabi.Helpers;
+using WalletWasabi.Interfaces;
 using WalletWasabi.Logging;
 using WalletWasabi.Models;
 using WalletWasabi.Services;
@@ -219,7 +220,8 @@ namespace WalletWasabi.Wallets
 			FeeStrategy feeStrategy,
 			bool allowUnconfirmed = false,
 			IEnumerable<OutPoint> allowedInputs = null,
-			IPayjoinClient payjoinClient = null)
+			IPayjoinClient payjoinClient = null,
+			IPsbtSigner psbtSigner = null)
 		{
 			var builder = new TransactionFactory(Network, KeyManager, Coins, password, allowUnconfirmed);
 			return builder.BuildTransaction(
@@ -241,7 +243,8 @@ namespace WalletWasabi.Wallets
 				},
 				allowedInputs,
 				SelectLockTimeForTransaction,
-				payjoinClient);
+				payjoinClient,
+				psbtSigner);
 		}
 
 		public void RenameLabel(SmartCoin coin, SmartLabel newLabel)

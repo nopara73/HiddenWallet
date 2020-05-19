@@ -162,13 +162,13 @@ namespace WalletWasabi.Hwi
 			return address;
 		}
 
-		public async Task<PSBT> SignTxAsync(HardwareWalletModels deviceType, string devicePath, PSBT psbt, CancellationToken cancel)
-			=> await SignTxImplAsync(deviceType, devicePath, null, psbt, cancel);
+		public async Task<PSBT> SignTxAsync(HardwareWalletModels deviceType, string devicePath, PSBT psbt, bool finalize, CancellationToken cancel)
+			=> await SignTxImplAsync(deviceType, devicePath, null, psbt, finalize, cancel);
 
-		public async Task<PSBT> SignTxAsync(HDFingerprint fingerprint, PSBT psbt, CancellationToken cancel)
-			=> await SignTxImplAsync(null, null, fingerprint, psbt, cancel);
+		public async Task<PSBT> SignTxAsync(HDFingerprint fingerprint, PSBT psbt, bool finalize, CancellationToken cancel)
+			=> await SignTxImplAsync(null, null, fingerprint, psbt, finalize, cancel);
 
-		private async Task<PSBT> SignTxImplAsync(HardwareWalletModels? deviceType, string devicePath, HDFingerprint? fingerprint, PSBT psbt, CancellationToken cancel)
+		private async Task<PSBT> SignTxImplAsync(HardwareWalletModels? deviceType, string devicePath, HDFingerprint? fingerprint, PSBT psbt, bool finalize, CancellationToken cancel)
 		{
 			var psbtString = psbt.ToBase64();
 
@@ -181,7 +181,7 @@ namespace WalletWasabi.Hwi
 
 			PSBT signedPsbt = HwiParser.ParsePsbt(response, Network);
 
-			if (!signedPsbt.IsAllFinalized())
+			if (finalize && !signedPsbt.IsAllFinalized())
 			{
 				signedPsbt.Finalize();
 			}

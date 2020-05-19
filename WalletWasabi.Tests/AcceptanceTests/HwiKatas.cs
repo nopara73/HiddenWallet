@@ -90,7 +90,7 @@ namespace WalletWasabi.Tests.AcceptanceTests
 
 			// USER: CONFIRM
 			PSBT psbt = BuildPsbt(network, fingerprint, xpub1, keyPath1);
-			PSBT signedPsbt = await client.SignTxAsync(deviceType, devicePath, psbt, cts.Token);
+			PSBT signedPsbt = await client.SignTxAsync(deviceType, devicePath, psbt, true, cts.Token);
 
 			Transaction signedTx = signedPsbt.GetOriginalTransaction();
 			Assert.Equal(psbt.GetOriginalTransaction().GetHash(), signedTx.GetHash());
@@ -209,11 +209,11 @@ namespace WalletWasabi.Tests.AcceptanceTests
 			PSBT psbt = BuildPsbt(network, fingerprint, xpub1, keyPath1);
 
 			// USER: REFUSE
-			var ex = await Assert.ThrowsAsync<HwiException>(async () => await client.SignTxAsync(deviceType, devicePath, psbt, cts.Token));
+			var ex = await Assert.ThrowsAsync<HwiException>(async () => await client.SignTxAsync(deviceType, devicePath, psbt, true, cts.Token));
 			Assert.Equal(HwiErrorCode.ActionCanceled, ex.ErrorCode);
 
 			// USER: CONFIRM
-			PSBT signedPsbt = await client.SignTxAsync(deviceType, devicePath, psbt, cts.Token);
+			PSBT signedPsbt = await client.SignTxAsync(deviceType, devicePath, psbt, true, cts.Token);
 
 			Transaction signedTx = signedPsbt.GetOriginalTransaction();
 			Assert.Equal(psbt.GetOriginalTransaction().GetHash(), signedTx.GetHash());
@@ -300,11 +300,11 @@ namespace WalletWasabi.Tests.AcceptanceTests
 
 			// USER: REFUSE
 			PSBT psbt = BuildPsbt(network, fingerprint, xpub1, keyPath1);
-			var ex = await Assert.ThrowsAsync<HwiException>(async () => await client.SignTxAsync(deviceType, devicePath, psbt, cts.Token));
+			var ex = await Assert.ThrowsAsync<HwiException>(async () => await client.SignTxAsync(deviceType, devicePath, psbt, true, cts.Token));
 			Assert.Equal(HwiErrorCode.BadArgument, ex.ErrorCode);
 
 			// USER: CONFIRM
-			PSBT signedPsbt = await client.SignTxAsync(deviceType, devicePath, psbt, cts.Token);
+			PSBT signedPsbt = await client.SignTxAsync(deviceType, devicePath, psbt, true, cts.Token);
 
 			Transaction signedTx = signedPsbt.GetOriginalTransaction();
 			Assert.Equal(psbt.GetOriginalTransaction().GetHash(), signedTx.GetHash());
