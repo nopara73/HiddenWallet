@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Reactive;
 using WalletWasabi.Gui.ViewModels;
 using WalletWasabi.Wallets;
 
@@ -46,6 +47,8 @@ namespace WalletWasabi.Gui.Suggestions
 			get => _suggestions;
 			set => this.RaiseAndSetIfChanged(ref _suggestions, value);
 		}
+
+		public ReactiveCommand<Unit, Unit> GenerateCommand { get; set; }
 
 		public void Reset()
 		{

@@ -63,6 +63,8 @@ namespace WalletWasabi.Gui.Controls.WalletExplorer
 				});
 			});
 
+			LabelSuggestion.GenerateCommand = GenerateCommand;
+
 			this.WhenAnyValue(x => x.SelectedAddress)
 				.Subscribe(async address =>
 				{
