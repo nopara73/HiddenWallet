@@ -274,6 +274,8 @@ lcov.info
 /WalletWasabi.Backend/wwwroot/onion-index.html
 /NuGet.Config
 
+# vim
+*.swp
 # WindowsInstaller generated files
 /WalletWasabi.WindowsInstaller/ComponentsGenerated.wxs
 /WalletWasabi.WindowsInstaller/*.wixobj

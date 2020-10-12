@@ -121,18 +121,27 @@ namespace WalletWasabi.Gui.Rpc
 		}
 
 		[JsonRpcMethod("build")]
-		public string BuildTransaction(PaymentInfo[] payments, OutPoint[] coins, int feeTarget, string password = null)
+		public string BuildTransaction(PaymentInfo[] payments, OutPoint[] coins, int feeTarget = 0, decimal feeRate = 0, string password = null)
 		{
 			Guard.NotNull(nameof(payments), payments);
 			Guard.NotNull(nameof(coins), coins);
-			Guard.InRangeAndNotNull(nameof(feeTarget), feeTarget, 2, Constants.SevenDaysConfirmationTarget);
 			password = Guard.Correct(password);
+			
+			var argFeeRate = new FeeRate(feeRate);
+
+			static bool InRange<T>(IComparable<T> val, T min, T max) =>
+				val.CompareTo(min) >= 0 && val.CompareTo(max) <= 0;
+
+			var feeStrategy = (feeRate, feeTarget) switch
+			{
+				(_, 0) when InRange(argFeeRate, Constants.MinRelayFeeRate, Constants.AbsurdlyHighFeeRate) => FeeStrategy.CreateFromFeeRate(argFeeRate),
+				(0, _) when InRange(feeTarget, 2, Constants.SevenDaysConfirmationTarget) => FeeStrategy.CreateFromConfirmationTarget(feeTarget),
+				_ => throw new ArgumentException("Fee parameters are missing, inconsistent or out of range.")
+			};
 
 			AssertWalletIsLoaded();
-			var sync = Global.Synchronizer;
 			var payment = new PaymentIntent(payments.Select(p =>
 				new DestinationRequest(p.Sendto.ScriptPubKey, MoneyRequest.Create(p.Amount, p.SubtractFee), new SmartLabel(p.Label))));
-			var feeStrategy = FeeStrategy.CreateFromConfirmationTarget(feeTarget);
 			var result = ActiveWallet.BuildTransaction(
 				password,
 				payment,
@@ -145,9 +154,9 @@ namespace WalletWasabi.Gui.Rpc
 		}
 
 		[JsonRpcMethod("send")]
-		public async Task<object> SendTransactionAsync(PaymentInfo[] payments, OutPoint[] coins, int feeTarget, string password = null)
+		public async Task<object> SendTransactionAsync(PaymentInfo[] payments, OutPoint[] coins, int feeTarget = 0, decimal feeRate = 0, string password = null)
 		{
-			var txHex = BuildTransaction(payments, coins, feeTarget, password);
+			var txHex = BuildTransaction(payments, coins, feeTarget, feeRate, password);
 			var smartTx = new SmartTransaction(Transaction.Parse(txHex, Global.Network), Height.Mempool);
 
 			// dequeue the coins we are going to spend
