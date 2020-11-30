@@ -4,20 +4,23 @@ Consider updating the versions in `WalletWasabi.Helpers.Constants`. If the versi
 
 ```sh
 sudo apt-get update && cd ~/WalletWasabi && git pull && cd ~/WalletWasabi/WalletWasabi.Backend && dotnet restore && cd ~
-sudo service nginx stop
 sudo systemctl stop walletwasabi.service
-sudo killall tor
 bitcoin-cli stop
 sudo apt-get upgrade -y && sudo apt-get autoremove -y
+# in case a new kernel is available:
 sudo reboot
+# service is restarted after boot, so stop it again
+sudo systemctl stop walletwasabi.service
+
 set DOTNET_CLI_TELEMETRY_OPTOUT=1
 bitcoind
 bitcoin-cli getblockchaininfo
-tor
-sudo service nginx start
 dotnet publish ~/WalletWasabi/WalletWasabi.Backend --configuration Release --self-contained false
 sudo systemctl start walletwasabi.service
-pgrep -ilfa tor && pgrep -ilfa bitcoin && pgrep -ilfa wasabi && pgrep -ilfa nginx
+pgrep -ilfa bitcoin
+systemctl status tor@default
+systemctl status walletwasabi
+systemctl status nginx
 tail -10000 ~/.walletwasabi/backend/Logs.txt
 ```
 
@@ -54,22 +57,6 @@ adduser user
 usermod -aG sudo user
 ```
 
-### Increase the number of files limit
-
-By default a process can keep open up to 4096 files. Increase that limit for the `user` user as follows:
-
-```sh
-sudo pico /etc/security/limits.conf
-```
-
-```
-# Wasabi backend
-# Wasabi runs with the user called user
-user    soft nofile 16384
-user    hard nofile 16384
-# End of Wasabi backend
-```
-
 # Setup Firewall
 
 https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-14-04
@@ -101,6 +88,18 @@ https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
 Opt out of the telemetry:
 
 ```sh
+pico /home/user/.bashrc
+```
+
+Add:
+
+```sh
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+```
+
+and apply it to the current session as well:
+
+```sh
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 ```
 
@@ -110,19 +109,13 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 sudo apt-get install tor
 ```
 
-Check if Tor is already running in the background:
+Check if Tor is running in the background:
 
 ```sh
-pgrep -ilfa tor
-sudo killall tor
+systemctl status tor@default
 ```
 
-Verify Tor is properly running:
-```sh
-tor
-```
-
-Create torrc:
+Edit torrc (but beware updates) or read below:
 
 ```sh
 sudo pico /etc/tor/torrc
@@ -149,6 +142,45 @@ HiddenServiceNonAnonymousMode 1
 HiddenServiceSingleHopMode 1
 ```
 
+However there's annoyance and a risk you'll rewrite it accidentally on upgrade.
+If you want to avoid this risk
+[Cryptoanarchy Debian Repository](https://github.com/Kixunil/cryptoanarchy-deb-repo-builder/)
+contains a simple package that takes care of it. After adding the repository:
+
+```sh
+sudo apt install tor-hs-patch-config
+```
+
+Then place:
+
+```
+HiddenServiceDir /home/user/.hidden_service_v3
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:37127
+```
+
+into `/etc/tor/hidden_services.d/wasabi.conf`
+
+and
+
+```
+Log notice file /home/user/.walletwasabi/notices.log
+
+# ---MAKE TOR FASTER---
+
+# Need to disable for HiddenServiceNonAnonymousMode
+SOCKSPort 0
+# Need to enable for HiddenServiceSingleHopMode
+HiddenServiceNonAnonymousMode 1
+# This option makes every hidden service instance hosted by a tor
+# instance a Single Onion Service. One-hop circuits make Single Onion
+# servers easily locatable, but clients remain location-anonymous.
+HiddenServiceSingleHopMode 1
+```
+
+into `/etc/tor/conf.d/wasabi.conf`
+
+
 Enable firewall:
 ```sh
 sudo ufw allow 80
@@ -156,7 +188,12 @@ sudo ufw allow 80
 
 **Backup the generated private key!**
 
+The key is located in `/home/user/.hidden_service_v3`
+
 ## Update Tor
+
+Tor package provided by the OS should have all security fixes and the maintainers of the OS
+are responsible for making sure it works. However if you must have the latest version:
 
 ```
 $ sudo pico /etc/apt/sources.list
@@ -166,9 +203,7 @@ deb https://deb.torproject.org/torproject.org bionic main
 deb-src https://deb.torproject.org/torproject.org bionic main
 
 $ curl https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc | gpg --import
-$ gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 > exported
-$ sudo apt-key add exported
-$ rm exported
+$ gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | sudo apt-key add -
 $ sudo apt update
 $ sudo apt install tor
 IMPORTANT! Press N otherwise it will replace the torrc with a default version and bye wasabi hidden service
@@ -253,12 +288,14 @@ RestartSec=10  # Restart service after 10 seconds if dotnet service crashes
 SyslogIdentifier=walletwasabi-backend
 User=user
 Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+LimitNOFILE=16384
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ```sh
+sudo systemctl daemon-reload
 sudo systemctl enable walletwasabi.service
 sudo systemctl start walletwasabi.service
 systemctl status walletwasabi.service
@@ -267,9 +304,10 @@ tail -10000 .walletwasabi/backend/Logs.txt
 
 ## Tor
 
+Tor should run automatically on boot. If it doesn't:
+
 ```sh
-tor
-pgrep -ilfa tor
+sudo systemctl start tor@default
 ```
 
 Review the tor activity using the logs stored in the linux journal:
@@ -309,7 +347,7 @@ sudo ufw allow https
 
 ```sh
 sudo apt-get install nginx -y
-sudo service nginx start
+sudo systemctl start nginx
 ```
 Verify the browser displays the default landing page for Nginx.
 The landing page is reachable at `http://<server_IP_address>/index.nginx-debian.html`
@@ -347,13 +385,16 @@ server {
 ```
 
 ```sh
+# Test that nginx configuration is valid
 sudo nginx -t
-sudo nginx -s reload
+# Reload nginx
+sudo systemctl reload nginx
 ```
 
 Setup https, redirect to https when asks. This will modify the above config file, but oh well.
 
 ```sh
+sudo apt install certbot
 sudo certbot -d wasabiwallet.io -d www.wasabiwallet.io -d wasabiwallet.net -d www.wasabiwallet.net -d wasabiwallet.org -d www.wasabiwallet.org -d wasabiwallet.info -d www.wasabiwallet.info -d wasabiwallet.co -d www.wasabiwallet.co -d zerolink.info -d www.zerolink.info -d hiddenwallet.org -d www.hiddenwallet.org
 ```
 
@@ -371,7 +412,7 @@ Add `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; 
 
 ```sh
 sudo nginx -t
-sudo nginx -s reload
+sudo systemctl reload nginx
 ```
 
 After accessing the website finalize preload in https://hstspreload.org/
