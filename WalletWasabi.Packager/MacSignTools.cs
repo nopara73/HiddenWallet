@@ -136,8 +136,8 @@ namespace WalletWasabi.Packager
 
 			// The main executable needs to be signed last.
 			var filesToSignInOrder = Directory.GetFiles(appPath, "*.*", SearchOption.AllDirectories)
-				.OrderBy(file => executables.Contains(file))
 				.OrderBy(file => new FileInfo(file).Name == "wassabee")
+				.ThenBy(file => executables.Contains(file))
 				.ToArray();
 
 			foreach (var file in executables)

@@ -105,8 +105,6 @@ namespace WalletWasabi.Gui
 
 				BitcoinStore = new BitcoinStore(indexStore, transactionStore, mempoolService, blocks);
 
-				SingleInstanceChecker = new SingleInstanceChecker(Network);
-
 				WasabiClientFactory wasabiClientFactory = Config.UseTor
 					? new WasabiClientFactory(Config.TorSocks5EndPoint, backendUriGetter: () => Config.GetCurrentBackendUri())
 					: new WasabiClientFactory(torEndPoint: null, backendUriGetter: () => Config.GetFallbackBackendUri());
@@ -121,8 +119,6 @@ namespace WalletWasabi.Gui
 
 		private CancellationTokenSource StoppingCts { get; }
 
-		private SingleInstanceChecker SingleInstanceChecker { get; }
-
 		public async Task InitializeNoWalletAsync(TerminateService terminateService)
 		{
 			InitializationStarted = true;
@@ -130,8 +126,6 @@ namespace WalletWasabi.Gui
 
 			try
 			{
-				await SingleInstanceChecker.CheckAsync().ConfigureAwait(false);
-
 				cancel.ThrowIfCancellationRequested();
 
 				Cache = new MemoryCache(new MemoryCacheOptions
@@ -750,17 +744,6 @@ namespace WalletWasabi.Gui
 				catch (Exception ex)
 				{
 					Logger.LogError($"Error during the disposal of {nameof(BitcoinStore)}: {ex}");
-				}
-
-				Logger.LogDebug($"Step: {nameof(SingleInstanceChecker)}.", nameof(Global));
-
-				try
-				{
-					SingleInstanceChecker?.Dispose();
-				}
-				catch (Exception ex)
-				{
-					Logger.LogError($"Error during the disposal of {nameof(SingleInstanceChecker)}: {ex}");
 				}
 
 				Logger.LogDebug($"Step: {nameof(AsyncMutex)}.", nameof(Global));

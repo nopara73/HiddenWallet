@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.Notifications;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using AvalonStudio.Documents;
 using AvalonStudio.Extensibility;
 using AvalonStudio.Shell;
@@ -10,21 +11,27 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using WalletWasabi.Gui.Controls.WalletExplorer;
 using WalletWasabi.Gui.Dialogs;
 using WalletWasabi.Gui.Tabs.WalletManager;
 using WalletWasabi.Gui.ViewModels;
+using WalletWasabi.Helpers;
 using WalletWasabi.Logging;
+using WalletWasabi.Services;
 
 namespace WalletWasabi.Gui
 {
 	public class MainWindow : MetroWindow
 	{
+		private long _closingState;
+
 		public MainWindow()
 		{
 			Global = Locator.Current.GetService<Global>();
+			SingleInstanceChecker = Locator.Current.GetService<SingleInstanceChecker>();
 
 			InitializeComponent();
 #if DEBUG
@@ -41,26 +48,58 @@ namespace WalletWasabi.Gui
 			Locator.CurrentMutable.RegisterConstant<INotificationManager>(notificationManager);
 
 			Closing += MainWindow_ClosingAsync;
+
+			SingleInstanceChecker.OtherInstanceStarted += SingleInstanceChecker_OtherInstanceStarted;
 		}
 
 		private Global Global { get; }
+
+		private SingleInstanceChecker SingleInstanceChecker { get; }
+
+		private void SingleInstanceChecker_OtherInstanceStarted(object? sender, EventArgs e)
+		{
+			Dispatcher.UIThread.PostLogException(() => Show());
+		}
 
 		private void InitializeComponent()
 		{
 			AvaloniaXamlLoader.Load(this);
 		}
 
-		private int _closingState;
+		public void CloseFromMenuAsync()
+		{
+			switch (Interlocked.CompareExchange(ref _closingState, 1, 0))
+			{
+				case 0:
+					Dispatcher.UIThread.PostLogException(async () => await ClosingAsync());
+					break;
+
+				default:
+					return;
+			}
+		}
 
 		private async void MainWindow_ClosingAsync(object? sender, CancelEventArgs e)
 		{
 			try
 			{
 				e.Cancel = true;
+
+				if (Interlocked.Read(ref _closingState) == 0)
+				{
+					if (Global.UiConfig.HideWindowOnClose)
+					{
+						await HideWindowAsync();
+						return;
+					}
+				}
+
 				switch (Interlocked.CompareExchange(ref _closingState, 1, 0))
 				{
 					case 0:
-						await ClosingAsync();
+						{
+							await ClosingAsync();
+						}
 						break;
 
 					case 1:
@@ -75,6 +114,20 @@ namespace WalletWasabi.Gui
 			catch (Exception ex)
 			{
 				Logger.LogError(ex);
+			}
+		}
+
+		public async Task HideWindowAsync()
+		{
+			if (OperatingSystem.IsMacOS())
+			{
+				
+				string shellCommand = $"osascript -e 'tell application \"System Events\" to set visible of process \"Wasabi Wallet\" to false'";
+				await EnvironmentHelpers.ShellExecAsync(shellCommand, waitForExit: true).ConfigureAwait(false);
+			}
+			else
+			{
+				Hide();
 			}
 		}
 
@@ -128,6 +181,9 @@ namespace WalletWasabi.Gui
 					}
 
 					Interlocked.Exchange(ref _closingState, 2); //now we can close the app
+
+					SingleInstanceChecker.OtherInstanceStarted -= SingleInstanceChecker_OtherInstanceStarted;
+
 					Close(); // start the closing process. Will call MainWindow_ClosingAsync again!
 				}
 				//let's go to finally

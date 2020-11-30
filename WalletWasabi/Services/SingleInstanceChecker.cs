@@ -1,95 +1,154 @@
+using Microsoft.Extensions.Hosting;
 using NBitcoin;
 using Nito.AsyncEx;
 using System;
+using System.ComponentModel;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using WalletWasabi.Logging;
 
 namespace WalletWasabi.Services
 {
-	public class SingleInstanceChecker : IDisposable
+	public class SingleInstanceChecker : BackgroundService, IAsyncDisposable
 	{
-		/// <summary>Unique prefix for global mutex name.</summary>
-		private const string MutexString = "WalletWasabiSingleInstance";
-
-		/// <summary>Name of system-wide mutex.</summary>
-		private readonly string _lockName;
-
-		private bool _disposedValue;
-
 		/// <summary>
-		/// Creates a new instance of the object where lock name is based on <paramref name="network"/> name.
+		/// Creates an object to ensure mutual exclusion of Wasabi instances per Network <paramref name="network"/>.
+		/// The solution based on TCP socket.
 		/// </summary>
-		/// <param name="network">Bitcoin network selected when Wasabi Wallet was started.</param>
-		public SingleInstanceChecker(Network network) : this(network, network.ToString())
+		/// <param name="network">Bitcoin network selected when Wasabi Wallet was started. It will use the port 37129,37130,37131 according to network main,test,reg.</param>
+		public SingleInstanceChecker(Network network) : this(NetworkToPort(network))
 		{
 		}
 
 		/// <summary>
 		/// Use this constructor only for testing.
 		/// </summary>
-		/// <param name="network">Bitcoin network selected when Wasabi Wallet was started.</param>
-		/// <param name="lockName">Name of system-wide mutex.</param>
-		public SingleInstanceChecker(Network network, string lockName)
+		public SingleInstanceChecker(int port)
 		{
-			Network = network;
-			_lockName = $"{MutexString}-{lockName}";
+			Port = port;
 		}
 
-		private IDisposable? SingleApplicationLockHolder { get; set; }
-		private Network Network { get; }
+		private int Port { get; }
 
-		public async Task CheckAsync()
+		private CancellationTokenSource DisposeCts { get; } = new();
+		private TaskCompletionSource? TaskStartTcpListener { get; set; }
+
+		public event EventHandler? OtherInstanceStarted;
+
+		/// <summary>
+		/// This function ensures this is the first instance running on this machine or throws an exception if we are not. In case of secondary start
+		/// we are trying signal the first instance before throwing the exception.
+		/// On macOS this funtion will never throw if you run Wasabi as a macApp, because mac prevents running the same app multiple time on OS level.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">Wasabi is already running, signalling the first instance failed.</exception>
+		/// <exception cref="OperationCanceledException">Wasabi is already running and signalled.</exception>
+		public async Task EnsureSingleOrThrowAsync()
 		{
-			if (_disposedValue)
+			if (DisposeCts.IsCancellationRequested)
 			{
 				throw new ObjectDisposedException(nameof(SingleInstanceChecker));
 			}
 
-			// The disposal of this mutex handled by AsyncMutex.WaitForAllMutexToCloseAsync().
-			var mutex = new AsyncMutex(_lockName);
 			try
 			{
-				using CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
-				SingleApplicationLockHolder = await mutex.LockAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+				TaskStartTcpListener = new TaskCompletionSource();
+
+				// Start ExecuteAsync.
+				await StartAsync(DisposeCts.Token).ConfigureAwait(false);
+
+				// Wait for the result of TcpListener.Start().
+				await TaskStartTcpListener.Task.WithAwaitCancellationAsync(DisposeCts.Token).ConfigureAwait(false);
+
+				// This is the first instance, nothing else to do.
+				return;
 			}
-			catch (IOException ex)
+			catch (SocketException ex) when (ex.ErrorCode is 10048 or 48 or 98)
 			{
-				throw new InvalidOperationException($"Wasabi is already running on {Network}!", ex);
+				// ErrorCodes are different on every OS: win, macOS, linux.
+				// It is already used -> another Wasabi is running on this network.
+				Logger.LogDebug("Detected another Wasabi instance.");
 			}
+
+			try
+			{
+				// Signal to the other instance, that there was an attempt to start the software.
+				using TcpClient client = new TcpClient();
+				await client.ConnectAsync(IPAddress.Loopback, Port).ConfigureAwait(false);
+				// I was able to signal to the other instance successfully so just continue.
+			}
+			catch (Exception)
+			{
+				throw new InvalidOperationException($"Wasabi is already running.");
+			}
+
+			// Do not log anything here as the first instance is writing the Log at this time.
+			throw new OperationCanceledException($"Wasabi is already running, signalled the first instance.");
 		}
 
-		/// <summary>
-		/// <list type="bullet">
-		/// <item>Unmanaged resources need to be released regardless of the value of the <paramref name="disposing"/> parameter.</item>
-		/// <item>Managed resources need to be released if the value of <paramref name="disposing"/> is <c>true</c>.</item>
-		/// </list>
-		/// </summary>
-		/// <param name="disposing">
-		/// Indicates whether the method call comes from a <see cref="Dispose()"/> method
-		/// (its value is <c>true</c>) or from a finalizer (its value is <c>false</c>).
-		/// </param>
-		protected virtual void Dispose(bool disposing)
+		private static int NetworkToPort(Network network)
 		{
-			if (!_disposedValue)
+			if (network == Network.Main)
 			{
-				if (disposing)
+				return 37129;
+			}
+			else if (network == Network.TestNet)
+			{
+				return 37130;
+			}
+
+			return 37131;
+		}
+
+		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+		{
+			var task = TaskStartTcpListener;
+			if (task is null)
+			{
+				Logger.LogError("This is impossible!");
+				return;
+			}
+
+			var listener = new TcpListener(IPAddress.Loopback, Port);
+			try
+			{
+				// This can throw an exception if the port is already open.
+				listener.Start();
+
+				// Indicate that the Listener is created successfully.
+				task.TrySetResult();
+
+				// Stop listener here to ensure thread-safety.
+				using var _ = stoppingToken.Register(() => listener.Stop());
+
+				while (!stoppingToken.IsCancellationRequested)
 				{
-					SingleApplicationLockHolder?.Dispose();
+					await listener.AcceptTcpClientAsync().ConfigureAwait(false);
+					Logger.LogInfo($"Detected another Wasabi instance.");
+					OtherInstanceStarted?.Invoke(this, EventArgs.Empty);
 				}
-				_disposedValue = true;
+			}
+			catch (Exception ex)
+			{
+				// Indicate that there was an error.
+				task.TrySetException(ex);
+				return;
+			}
+			finally
+			{
+				listener.Stop();
 			}
 		}
 
-		/// <summary>
-		/// Do not change this code.
-		/// </summary>
-		public void Dispose()
+		public async ValueTask DisposeAsync()
 		{
-			// Dispose of unmanaged resources.
-			Dispose(true);
-			// Suppress finalization.
-			GC.SuppressFinalize(this);
+			DisposeCts.Cancel();
+
+			await StopAsync(CancellationToken.None).ConfigureAwait(false);
+
+			DisposeCts.Dispose();
 		}
 	}
 }
