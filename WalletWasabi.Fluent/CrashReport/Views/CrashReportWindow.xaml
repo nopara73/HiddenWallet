@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:WalletWasabi.Fluent.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+        xmlns:behaviors="clr-namespace:WalletWasabi.Gui.Behaviors;assembly=WalletWasabi.Gui"
+        x:Class="WalletWasabi.Fluent.CrashReport.Views.CrashReportWindow"
+        Icon="avares://WalletWasabi.Gui/Assets/WasabiLogo256.png"
+        Title="{Binding Title}"
+        MinWidth="{Binding MinWidth}" MinHeight="{Binding MinHeight}"
+        Width="{Binding MinWidth, Mode=OneTime}" Height="{Binding MinHeight, Mode=OneTime}"
+        FontFamily="{DynamicResource UiFont}" FontSize="14"
+        Foreground="{DynamicResource ThemeForegroundBrush}"
+        WindowState="{Binding WindowState}"
+        Classes="ToolWindow"
+        CanResize="False">
+  <i:Interaction.Behaviors>
+    <behaviors:CloseWindowCommandBehavior Command="{Binding OkCommand}" />
+  </i:Interaction.Behaviors>
+  <Panel>
+    <Grid ColumnDefinitions="*,*,200" RowDefinitions="*,*,200" Opacity="0.05">
+      <DrawingPresenter Grid.Column="2" Grid.Row="2" Margin="-50" Drawing="{DynamicResource WasabiLogo}" />
+    </Grid>
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="25,0,25,25">
+      <TextBlock Grid.Row="0" Text="{Binding ReportTitle}" FontSize="25" FontWeight="Bold" Margin="0,0,0,12" />
+      <TextBlock Grid.Row="1" Text="{Binding Details}" Margin="0,0,0,2" TextWrapping="Wrap" />
+      <TextBox Grid.Row="2" Text="{Binding Message}" Classes="selectableTextBlock largeHeader" FontSize="14" FontStyle="Italic" Background="Transparent" />
+      <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5" Margin="0,8,0,0">
+        <Button MinWidth="135" Height="35" Command="{Binding OpenLogCommand}">Open logs</Button>
+        <Button MinWidth="135" Height="35" Background="{DynamicResource ThemeAccentBrush}" Command="{Binding OkCommand}">Ok</Button>
+      </StackPanel>
+    </Grid>
+  </Panel>
+</Window>
