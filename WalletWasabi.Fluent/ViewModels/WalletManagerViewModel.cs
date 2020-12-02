@@ -12,12 +12,12 @@ using WalletWasabi.Wallets;
 
 namespace WalletWasabi.Fluent.ViewModels
 {
-	public class WalletManagerViewModel : ViewModelBase
+	public partial class WalletManagerViewModel : ViewModelBase
 	{
-		private WalletViewModelBase? _selectedItem;
-		private ObservableCollection<WalletViewModelBase> _items;
 		private readonly Dictionary<Wallet, WalletViewModelBase> _walletDictionary;
-		private bool _anyWalletStarted;
+		[AutoNotify] private WalletViewModelBase? _selectedItem;
+		[AutoNotify] private ObservableCollection<WalletViewModelBase> _items;
+		[AutoNotify] private bool _anyWalletStarted;
 
 		public WalletManagerViewModel(WalletManager walletManager, UiConfig uiConfig)
 		{
@@ -66,24 +66,6 @@ namespace WalletWasabi.Fluent.ViewModels
 		}
 
 		public WalletManager Model { get; }
-
-		public WalletViewModelBase? SelectedItem
-		{
-			get => _selectedItem;
-			set => this.RaiseAndSetIfChanged(ref _selectedItem, value);
-		}
-
-		public ObservableCollection<WalletViewModelBase> Items
-		{
-			get => _items;
-			set => this.RaiseAndSetIfChanged(ref _items, value);
-		}
-
-		public bool AnyWalletStarted
-		{
-			get => _anyWalletStarted;
-			set => this.RaiseAndSetIfChanged(ref _anyWalletStarted, value);
-		}
 
 		private void OpenClosedWallet(WalletManager walletManager, UiConfig uiConfig, ClosedWalletViewModel closedWalletViewModel)
 		{

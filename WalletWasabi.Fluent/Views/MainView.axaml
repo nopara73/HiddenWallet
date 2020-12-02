@@ -14,7 +14,9 @@
              x:Class="WalletWasabi.Fluent.Views.MainView">
   <Panel>
     <SplitView
-      IsEnabled="{Binding IsMainContentEnabled}" CompactPaneLength="68" OpenPaneLength="280"
+      IsEnabled="{Binding IsMainContentEnabled}"
+      CompactPaneLength="{Binding NavBar.CurrentCompactPaneLength}"
+      OpenPaneLength="{Binding NavBar.CurrentOpenPaneLength}"
       IsPaneOpen="{Binding NavBar.IsOpen, Mode=TwoWay}">
       <i:Interaction.Behaviors>
         <behaviors:SplitViewAutoBehavior ToggleAction="{Binding NavBar.ToggleAction, Mode=OneWayToSource}"

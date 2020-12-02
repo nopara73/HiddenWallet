@@ -1,6 +1,6 @@
 namespace WalletWasabi.Fluent.ViewModels.Navigation
 {
-	public interface INavigationManager<T> where T : INavigatable
+	public interface INavigationStack<T> where T : INavigatable
 	{
 		/// <summary>
 		/// The Current Page.

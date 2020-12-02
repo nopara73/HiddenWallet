@@ -13,9 +13,9 @@ using WalletWasabi.Gui.ViewModels;
 
 namespace WalletWasabi.Fluent.ViewModels.Wallets
 {
-	public class WalletViewModel : WalletViewModelBase
+	public partial class WalletViewModel : WalletViewModelBase
 	{
-		private ObservableCollection<ViewModelBase> _actions;
+		[AutoNotify] private ObservableCollection<ViewModelBase> _actions;
 
 		protected WalletViewModel(UiConfig uiConfig, Wallet wallet) : base(wallet)
 		{
@@ -58,12 +58,6 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets
 		}
 
 		private CompositeDisposable Disposables { get; set; }
-
-		public ObservableCollection<ViewModelBase> Actions
-		{
-			get => _actions;
-			set => this.RaiseAndSetIfChanged(ref _actions, value);
-		}
 
 		public override string IconName => "web_asset_regular";
 

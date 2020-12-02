@@ -12,13 +12,23 @@ using WalletWasabi.Userfacing;
 
 namespace WalletWasabi.Fluent.ViewModels.Settings
 {
-	public class BitcoinTabViewModel : SettingsTabViewModelBase
+	[NavigationMetaData(
+		Title = "Bitcoin",
+		Caption = "Manage Bitcoin settings",
+		Order = 3,
+		Category = "Settings",
+		Keywords = new[]
+		{
+			"Settings", "Bitcoin", "Network", "Main", "TestNet", "RegTest", "Run", "Knots", "Startup", "P2P", "Endpoint"
+		},
+		IconName = "settings_bitcoin_regular")]
+	public partial class BitcoinTabViewModel : SettingsTabViewModelBase
 	{
-		private Network _network;
-		private bool _startLocalBitcoinCoreOnStartup;
-		private string _localBitcoinCoreDataDir;
-		private bool _stopLocalBitcoinCoreOnShutdown;
-		private string _bitcoinP2PEndPoint;
+		[AutoNotify] private Network _network;
+		[AutoNotify] private bool _startLocalBitcoinCoreOnStartup;
+		[AutoNotify] private string _localBitcoinCoreDataDir;
+		[AutoNotify] private bool _stopLocalBitcoinCoreOnShutdown;
+		[AutoNotify] private string _bitcoinP2PEndPoint;
 
 		public BitcoinTabViewModel(Config config, UiConfig uiConfig) : base(config, uiConfig)
 		{
@@ -44,37 +54,7 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 
 		public Version BitcoinCoreVersion => Constants.BitcoinCoreVersion;
 
-		public Network Network
-		{
-			get => _network;
-			set => this.RaiseAndSetIfChanged(ref _network, value);
-		}
-
 		public IEnumerable<Network> Networks => Network.GetNetworks();
-
-		public bool StartLocalBitcoinCoreOnStartup
-		{
-			get => _startLocalBitcoinCoreOnStartup;
-			set => this.RaiseAndSetIfChanged(ref _startLocalBitcoinCoreOnStartup, value);
-		}
-
-		public string LocalBitcoinCoreDataDir
-		{
-			get => _localBitcoinCoreDataDir;
-			set => this.RaiseAndSetIfChanged(ref _localBitcoinCoreDataDir, value);
-		}
-
-		public bool StopLocalBitcoinCoreOnShutdown
-		{
-			get => _stopLocalBitcoinCoreOnShutdown;
-			set => this.RaiseAndSetIfChanged(ref _stopLocalBitcoinCoreOnShutdown, value);
-		}
-
-		public string BitcoinP2PEndPoint
-		{
-			get => _bitcoinP2PEndPoint;
-			set => this.RaiseAndSetIfChanged(ref _bitcoinP2PEndPoint, value);
-		}
 
 		private void ValidateBitcoinP2PEndPoint(IValidationErrors errors)
 			=> ValidateEndPoint(errors, BitcoinP2PEndPoint, Network.DefaultPort, whiteSpaceOk: true);
@@ -98,6 +78,7 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 				{
 					config.SetP2PEndpoint(p2PEp);
 				}
+
 				config.StartLocalBitcoinCoreOnStartup = StartLocalBitcoinCoreOnStartup;
 				config.StopLocalBitcoinCoreOnShutdown = StopLocalBitcoinCoreOnShutdown;
 				config.LocalBitcoinCoreDataDir = Guard.Correct(LocalBitcoinCoreDataDir);

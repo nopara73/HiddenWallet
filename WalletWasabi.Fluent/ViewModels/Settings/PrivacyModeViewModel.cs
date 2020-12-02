@@ -6,9 +6,10 @@ using WalletWasabi.Gui;
 
 namespace WalletWasabi.Fluent.ViewModels.Settings
 {
-	public class PrivacyModeViewModel : NavBarItemViewModel
+	[NavigationMetaData(Title = "Privacy Mode", Searchable = false, NavBarPosition = NavBarPosition.Bottom)]
+	public partial class PrivacyModeViewModel : NavBarItemViewModel
 	{
-		private bool _privacyMode;
+		[AutoNotify] private bool _privacyMode;
 
 		public PrivacyModeViewModel(UiConfig uiConfig)
 		{
@@ -31,12 +32,6 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 		}
 
 		public override string IconName => _privacyMode ? "privacy_mode_on" : "privacy_mode_off";
-
-		public bool PrivacyMode
-		{
-			get => _privacyMode;
-			set => this.RaiseAndSetIfChanged(ref _privacyMode, value);
-		}
 
 		public override void Toggle()
 		{

@@ -19,11 +19,11 @@ using WalletWasabi.Wallets;
 
 namespace WalletWasabi.Fluent.ViewModels.AddWallet
 {
-	public class RecoverWalletViewModel : RoutableViewModel
+	public partial class RecoverWalletViewModel : RoutableViewModel
 	{
-		private string? _selectedTag;
-		private IEnumerable<string>? _suggestions;
-		private Mnemonic? _currentMnemonics;
+		[AutoNotify] private string? _selectedTag;
+		[AutoNotify] private IEnumerable<string>? _suggestions;
+		[AutoNotify] private Mnemonic? _currentMnemonics;
 
 		public RecoverWalletViewModel(
 			string walletName,
@@ -129,24 +129,6 @@ namespace WalletWasabi.Fluent.ViewModels.AddWallet
 		private Interaction<(KeyPath, int), (KeyPath?, int?)> AdvancedOptionsInteraction { get; }
 
 		public ObservableCollection<string> Mnemonics { get; } = new ObservableCollection<string>();
-
-		public IEnumerable<string>? Suggestions
-		{
-			get => _suggestions;
-			set => this.RaiseAndSetIfChanged(ref _suggestions, value);
-		}
-
-		public string? SelectedTag
-		{
-			get => _selectedTag;
-			set => this.RaiseAndSetIfChanged(ref _selectedTag, value);
-		}
-
-		private Mnemonic? CurrentMnemonics
-		{
-			get => _currentMnemonics;
-			set => this.RaiseAndSetIfChanged(ref _currentMnemonics, value);
-		}
 
 		private void ValidateMnemonics(IValidationErrors errors)
 		{

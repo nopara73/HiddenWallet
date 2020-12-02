@@ -7,9 +7,9 @@ using WalletWasabi.Legal;
 
 namespace WalletWasabi.Fluent.ViewModels.AddWallet
 {
-	public class TermsAndConditionsViewModel : RoutableViewModel
+	public partial class TermsAndConditionsViewModel : RoutableViewModel
 	{
-		private bool _isAgreed;
+		[AutoNotify] private bool _isAgreed;
 
 		public TermsAndConditionsViewModel(LegalDocuments legalDocuments, RoutableViewModel next)
 		{
@@ -29,12 +29,6 @@ namespace WalletWasabi.Fluent.ViewModels.AddWallet
 					Navigate().BackTo(next);
 				},
 				this.WhenAnyValue(x => x.IsAgreed).ObserveOn(RxApp.MainThreadScheduler));
-		}
-
-		public bool IsAgreed
-		{
-			get => _isAgreed;
-			set => this.RaiseAndSetIfChanged(ref _isAgreed, value);
 		}
 
 		public ICommand ViewTermsCommand { get; }

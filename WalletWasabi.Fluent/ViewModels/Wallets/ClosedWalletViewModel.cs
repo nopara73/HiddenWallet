@@ -11,9 +11,9 @@ using WalletWasabi.Wallets;
 
 namespace WalletWasabi.Fluent.ViewModels.Wallets
 {
-	public class ClosedWalletViewModel : WalletViewModelBase
+	public partial class ClosedWalletViewModel : WalletViewModelBase
 	{
-		private ObservableCollection<NavBarItemViewModel> _items;
+		[AutoNotify] private ObservableCollection<NavBarItemViewModel> _items;
 
 		protected ClosedWalletViewModel(WalletManager walletManager, Wallet wallet) : base(wallet)
 		{
@@ -42,12 +42,6 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets
 					}
 				},
 				this.WhenAnyValue(x => x.WalletState).Select(x => x == WalletState.Uninitialized));
-		}
-
-		public ObservableCollection<NavBarItemViewModel> Items
-		{
-			get => _items;
-			set => this.RaiseAndSetIfChanged(ref _items, value);
 		}
 
 		public ReactiveCommand<Unit, Unit> OpenWalletCommand { get; }

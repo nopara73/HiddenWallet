@@ -3,54 +3,43 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using ReactiveUI;
 using WalletWasabi.Fluent.ViewModels.NavBar;
 using WalletWasabi.Fluent.ViewModels.Navigation;
-using WalletWasabi.Fluent.ViewModels.Wallets;
 
 namespace WalletWasabi.Fluent.ViewModels.Search
 {
-	public class SearchPageViewModel : NavBarItemViewModel
+	[NavigationMetaData(
+		Title = "Search",
+		Searchable = false,
+		NavBarPosition = NavBarPosition.Bottom)]
+	public partial class SearchPageViewModel : NavBarItemViewModel
 	{
-		private readonly bool _showWallets = false;
-		private readonly WalletManagerViewModel _walletManager;
 		private readonly Dictionary<string, SearchCategory> _categories;
 		private readonly Dictionary<SearchCategory, SourceList<SearchItemViewModel>> _categorySources;
 		private ReadOnlyObservableCollection<SearchResult>? _searchResults;
 		private IObservable<IChangeSet<SearchItemViewModel>>? _sourceObservable;
-		private string? _searchQuery;
+		[AutoNotify] private string? _searchQuery;
 
-		public SearchPageViewModel(WalletManagerViewModel walletManager)
+		public SearchPageViewModel()
 		{
 			Title = "Search";
 			_categories = new Dictionary<string, SearchCategory>();
 			_categorySources = new Dictionary<SearchCategory, SourceList<SearchItemViewModel>>();
-			_walletManager = walletManager;
-
-			RegisterCategory("Wallets", 2);
 		}
 
 		public override string IconName => "search_regular";
-
-		public string? SearchQuery
-		{
-			get => _searchQuery;
-			set => this.RaiseAndSetIfChanged(ref _searchQuery, value);
-		}
 
 		public ReadOnlyObservableCollection<SearchResult> SearchResults => _searchResults!;
 
 		public void Initialise()
 		{
-			if (_showWallets)
+			foreach (var metaData in NavigationManager.MetaData.Where(
+				x => x.Searchable))
 			{
-				_walletManager.Items
-					.ToObservableChangeSet()
-					.OnItemAdded(x => RegisterWalletSearchItem(0, x))
-					.Subscribe();
+				RegisterSearchEntry(metaData);
 			}
 
 			var queryFilter = this.WhenValueChanged(t => t.SearchQuery)
@@ -68,7 +57,7 @@ namespace WalletWasabi.Fluent.ViewModels.Search
 				.AsObservableList();
 		}
 
-		public SearchCategory RegisterCategory(string title, int order)
+		public void RegisterCategory(string title, int order)
 		{
 			if (!_categories.ContainsKey(title))
 			{
@@ -88,36 +77,21 @@ namespace WalletWasabi.Fluent.ViewModels.Search
 				{
 					_sourceObservable = _sourceObservable.Merge(sourceList.Connect());
 				}
-
-				return category;
+				return;
 			}
 
 			throw new Exception("Category already exists.");
 		}
 
-		public SearchItemViewModel RegisterSearchEntry(
-			string title,
-			string caption,
-			int order,
-			string category,
-			string keywords,
-			string iconName,
-			Func<Task<RoutableViewModel>> createTargetView)
+		private void RegisterSearchEntry(NavigationMetaData metaData)
 		{
-			if (_categories.TryGetValue(category, out var searchCategory))
+			if (_categories.TryGetValue(metaData.Category, out var searchCategory))
 			{
-				var result = new SearchItemViewModel(
-					title,
-					caption,
-					order,
-					searchCategory,
-					keywords,
-					iconName,
-					createTargetView);
+				var result = new SearchItemViewModel(metaData, searchCategory);
 
 				_categorySources[searchCategory].Add(result);
 
-				return result;
+				return;
 			}
 
 			throw new Exception("Category doesn't exist.");
@@ -130,23 +104,11 @@ namespace WalletWasabi.Fluent.ViewModels.Search
 				if (!string.IsNullOrWhiteSpace(searchQuery)
 				    && !searchQuery.Contains(',', StringComparison.OrdinalIgnoreCase))
 				{
-					return item.Keywords.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+					return item.Keywords.Any(x => x.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)) ||
 					       item.Caption.Contains(searchQuery, StringComparison.OrdinalIgnoreCase);
 				}
 				return true;
 			};
-		}
-
-		private void RegisterWalletSearchItem(int order, WalletViewModelBase wallet)
-		{
-			RegisterSearchEntry(
-				title: wallet.WalletName,
-				caption: "",
-				order: order,
-				category: "Wallets",
-				keywords: $"Wallet, {wallet.WalletName}",
-				iconName: "web_asset_regular",
-				createTargetView: async () => await Task.FromResult(wallet));
 		}
 	}
 }

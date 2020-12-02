@@ -2,7 +2,14 @@ using WalletWasabi.Fluent.ViewModels.Navigation;
 
 namespace WalletWasabi.Fluent.ViewModels.AddWallet
 {
-	public class LegalDocumentsViewModel : RoutableViewModel
+	[NavigationMetaData(
+		Title = "Legal Docs",
+		Caption = "Displays terms and conditions",
+		Order = 3,
+		Category = "General",
+		Keywords = new[] { "View", "Legal", "Docs", "Documentation", "Terms", "Conditions", "Help" },
+		IconName = "info_regular")]
+	public partial class LegalDocumentsViewModel : RoutableViewModel
 	{
 		public LegalDocumentsViewModel(string content)
 		{

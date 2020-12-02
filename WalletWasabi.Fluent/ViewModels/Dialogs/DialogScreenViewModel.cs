@@ -7,9 +7,9 @@ using WalletWasabi.Fluent.ViewModels.Navigation;
 
 namespace WalletWasabi.Fluent.ViewModels.Dialogs
 {
-	public class DialogScreenViewModel : TargettedNavigationStack
+	public partial class DialogScreenViewModel : TargettedNavigationStack
 	{
-		private bool _isDialogOpen;
+		[AutoNotify] private bool _isDialogOpen;
 
 		public DialogScreenViewModel() : base(NavigationTarget.DialogScreen)
 		{
@@ -31,12 +31,6 @@ namespace WalletWasabi.Fluent.ViewModels.Dialogs
 			base.OnNavigated(oldPage, oldInStack, newPage, newInStack);
 
 			IsDialogOpen = CurrentPage is { };
-		}
-
-		public bool IsDialogOpen
-		{
-			get => _isDialogOpen;
-			set => this.RaiseAndSetIfChanged(ref _isDialogOpen, value);
 		}
 
 		private void CloseDialogs(IEnumerable<RoutableViewModel> navigationStack)

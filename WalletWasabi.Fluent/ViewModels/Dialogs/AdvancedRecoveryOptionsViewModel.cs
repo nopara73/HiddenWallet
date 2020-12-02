@@ -7,10 +7,10 @@ using WalletWasabi.Models;
 
 namespace WalletWasabi.Fluent.ViewModels.Dialogs
 {
-	public class AdvancedRecoveryOptionsViewModel : DialogViewModelBase<(KeyPath? accountKeyPath, int? minGapLimit)>
+	public partial class AdvancedRecoveryOptionsViewModel : DialogViewModelBase<(KeyPath? accountKeyPath, int? minGapLimit)>
 	{
-		private string _accountKeyPath;
-		private string _minGapLimit;
+		[AutoNotify] private string _accountKeyPath;
+		[AutoNotify] private string _minGapLimit;
 
 		public AdvancedRecoveryOptionsViewModel((KeyPath keyPath, int minGapLimit) interactionInput)
 		{
@@ -45,18 +45,6 @@ namespace WalletWasabi.Fluent.ViewModels.Dialogs
 				nextCommandCanExecute);
 
 			CancelCommand = ReactiveCommand.Create(() => Close(), cancelCommandCanExecute);
-		}
-
-		public string AccountKeyPath
-		{
-			get => _accountKeyPath;
-			set => this.RaiseAndSetIfChanged(ref _accountKeyPath, value);
-		}
-
-		public string MinGapLimit
-		{
-			get => _minGapLimit;
-			set => this.RaiseAndSetIfChanged(ref _minGapLimit, value);
 		}
 
 		private void ValidateMinGapLimit(IValidationErrors errors)

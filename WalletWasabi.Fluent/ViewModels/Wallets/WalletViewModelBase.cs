@@ -9,9 +9,9 @@ using WalletWasabi.Wallets;
 
 namespace WalletWasabi.Fluent.ViewModels.Wallets
 {
-	public abstract class WalletViewModelBase : NavBarItemViewModel, IComparable<WalletViewModelBase>, IDisposable
+	public abstract partial class WalletViewModelBase : NavBarItemViewModel, IComparable<WalletViewModelBase>, IDisposable
 	{
-		private string _titleTip;
+		[AutoNotify] private string _titleTip;
 		private WalletState _walletState;
 		private CompositeDisposable? _disposables;
 		private bool _disposedValue;
@@ -42,12 +42,6 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets
 		}
 
 		public Wallet Wallet { get; }
-
-		public string TitleTip
-		{
-			get => _titleTip;
-			set => this.RaiseAndSetIfChanged(ref _titleTip, value);
-		}
 
 		public string WalletName => Wallet.WalletName;
 

@@ -11,11 +11,12 @@ namespace WalletWasabi.Fluent.ViewModels.NavBar
 		Toggle = 2
 	}
 
-	public abstract class NavBarItemViewModel : RoutableViewModel
+	public abstract partial class NavBarItemViewModel : RoutableViewModel
 	{
 		private bool _isSelected;
 		private bool _isExpanded;
-		private string _title;
+
+		[AutoNotify] private string _title;
 
 		protected NavBarItemViewModel()
 		{
@@ -46,12 +47,6 @@ namespace WalletWasabi.Fluent.ViewModels.NavBar
 					Parent.IsExpanded = value;
 				}
 			}
-		}
-
-		public string Title
-		{
-			get => _title;
-			set => this.RaiseAndSetIfChanged(ref _title, value);
 		}
 
 		public bool IsSelected

@@ -3,9 +3,9 @@ using ReactiveUI;
 
 namespace WalletWasabi.Fluent.ViewModels.Dialogs
 {
-	public class TestDialogViewModel : DialogViewModelBase<bool>
+	public partial class TestDialogViewModel : DialogViewModelBase<bool>
 	{
-		private string _message;
+		[AutoNotify] private string _message;
 
 		public TestDialogViewModel(string message)
 		{
@@ -20,12 +20,6 @@ namespace WalletWasabi.Fluent.ViewModels.Dialogs
 			NextCommand = ReactiveCommand.Create(
 				() => Close(true),
 				this.WhenAnyValue(x => x.IsDialogOpen).ObserveOn(RxApp.MainThreadScheduler));
-		}
-
-		public string Message
-		{
-			get => _message;
-			set => this.RaiseAndSetIfChanged(ref _message, value);
 		}
 
 		protected override void OnDialogClosed()

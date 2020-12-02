@@ -5,13 +5,20 @@ using WalletWasabi.Gui;
 
 namespace WalletWasabi.Fluent.ViewModels.Settings
 {
-	public class PrivacyTabViewModel : SettingsTabViewModelBase
+	[NavigationMetaData(
+		Title = "Privacy",
+		Caption = "Manage privacy settings",
+		Order = 1,
+		Category = "Settings",
+		Keywords = new[] { "Settings", "Privacy", "Minimal", "Medium", "Strong", "Anonymity", "Level" },
+		IconName = "settings_privacy_regular")]
+	public partial class PrivacySettingsTabViewModel : SettingsTabViewModelBase
 	{
-		private int _minimalPrivacyLevel;
-		private int _mediumPrivacyLevel;
-		private int _strongPrivacyLevel;
+		[AutoNotify] private int _minimalPrivacyLevel;
+		[AutoNotify] private int _mediumPrivacyLevel;
+		[AutoNotify] private int _strongPrivacyLevel;
 
-		public PrivacyTabViewModel(Config config, UiConfig uiConfig) : base(config, uiConfig)
+		public PrivacySettingsTabViewModel(Config config, UiConfig uiConfig) : base(config, uiConfig)
 		{
 			_minimalPrivacyLevel = config.PrivacyLevelSome;
 			_mediumPrivacyLevel = config.PrivacyLevelFine;
@@ -65,24 +72,6 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 							MediumPrivacyLevel = x - 1;
 						}
 					});
-		}
-
-		public int MinimalPrivacyLevel
-		{
-			get => _minimalPrivacyLevel;
-			set => this.RaiseAndSetIfChanged(ref _minimalPrivacyLevel, value);
-		}
-
-		public int MediumPrivacyLevel
-		{
-			get => _mediumPrivacyLevel;
-			set => this.RaiseAndSetIfChanged(ref _mediumPrivacyLevel, value);
-		}
-
-		public int StrongPrivacyLevel
-		{
-			get => _strongPrivacyLevel;
-			set => this.RaiseAndSetIfChanged(ref _strongPrivacyLevel, value);
 		}
 
 		protected override void EditConfigOnSave(Config config)

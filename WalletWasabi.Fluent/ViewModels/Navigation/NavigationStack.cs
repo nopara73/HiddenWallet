@@ -5,7 +5,7 @@ using WalletWasabi.Gui.ViewModels;
 
 namespace WalletWasabi.Fluent.ViewModels.Navigation
 {
-	public class NavigationStack<T> : ViewModelBase, INavigationManager<T> where T : class, INavigatable
+	public class NavigationStack<T> : ViewModelBase, INavigationStack<T> where T : class, INavigatable
 	{
 		private readonly Stack<T> _backStack;
 		private T? _currentPage;

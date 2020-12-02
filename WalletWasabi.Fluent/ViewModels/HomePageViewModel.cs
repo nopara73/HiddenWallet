@@ -12,7 +12,15 @@ using WalletWasabi.Fluent.ViewModels.Navigation;
 
 namespace WalletWasabi.Fluent.ViewModels
 {
-	public class HomePageViewModel : NavBarItemViewModel
+	[NavigationMetaData(
+		Title = "Home",
+		Caption = "Manage existing wallets",
+		Order = 0,
+		Category = "General",
+		NavBarPosition = NavBarPosition.Top,
+		IconName = "home_regular",
+		Keywords = new[] { "Home" })]
+	public partial class HomePageViewModel : NavBarItemViewModel
 	{
 		private readonly ReadOnlyObservableCollection<NavBarItemViewModel> _items;
 		private readonly WalletManagerViewModel _walletManager;
@@ -35,10 +43,11 @@ namespace WalletWasabi.Fluent.ViewModels
 				.Bind(out _items)
 				.AsObservableList();
 
-			OpenWalletsFolderCommand = ReactiveCommand.Create(() => IoHelpers.OpenFolderInFileExplorer(walletManager.Model.WalletDirectories.WalletsDir));
+			OpenWalletsFolderCommand = ReactiveCommand.Create(
+				() => IoHelpers.OpenFolderInFileExplorer(walletManager.Model.WalletDirectories.WalletsDir));
 		}
 
-		public override string IconName => "home_regular";
+		public override string IconName => MetaData.IconName;
 
 		public ReadOnlyObservableCollection<NavBarItemViewModel> Items => _items;
 

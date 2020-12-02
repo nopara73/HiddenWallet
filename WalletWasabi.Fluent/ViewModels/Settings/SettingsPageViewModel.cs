@@ -6,10 +6,18 @@ using WalletWasabi.Gui;
 
 namespace WalletWasabi.Fluent.ViewModels.Settings
 {
-	public class SettingsPageViewModel : NavBarItemViewModel
+	[NavigationMetaData(
+		Title = "Settings",
+		Caption = "Manage appearance, privacy and other settings",
+		Order = 1,
+		Category = "General",
+		Keywords = new[] { "Settings", "General", "User", "Interface", "Privacy", "Advanced" },
+		IconName = "settings_regular",
+		NavBarPosition = NavBarPosition.Bottom)]
+	public partial class SettingsPageViewModel : NavBarItemViewModel
 	{
-		private bool _isModified;
-		private int _selectedTab;
+		[AutoNotify] private bool _isModified;
+		[AutoNotify] private int _selectedTab;
 
 		public SettingsPageViewModel(Config config, UiConfig uiConfig)
 		{
@@ -17,28 +25,16 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 
 			_selectedTab = 0;
 
-			GeneralTab = new GeneralTabViewModel(config, uiConfig);
-			PrivacyTab = new PrivacyTabViewModel(config, uiConfig);
-			NetworkTab = new NetworkTabViewModel(config, uiConfig);
+			GeneralSettingsTab = new GeneralSettingsTabViewModel(config, uiConfig);
+			PrivacySettingsTab = new PrivacySettingsTabViewModel(config, uiConfig);
+			NetworkSettingsTab = new NetworkSettingsTabViewModel(config, uiConfig);
 			BitcoinTab = new BitcoinTabViewModel(config, uiConfig);
 		}
 
-		public GeneralTabViewModel GeneralTab { get; }
-		public PrivacyTabViewModel PrivacyTab { get; }
-		public NetworkTabViewModel NetworkTab { get; }
+		public GeneralSettingsTabViewModel GeneralSettingsTab { get; }
+		public PrivacySettingsTabViewModel PrivacySettingsTab { get; }
+		public NetworkSettingsTabViewModel NetworkSettingsTab { get; }
 		public BitcoinTabViewModel BitcoinTab { get; }
-
-		public bool IsModified
-		{
-			get => _isModified;
-			set => this.RaiseAndSetIfChanged(ref _isModified, value);
-		}
-
-		public int SelectedTab
-		{
-			get => _selectedTab;
-			set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
-		}
 
 		public override string IconName => "settings_regular";
 
@@ -53,11 +49,8 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 
 			SettingsTabViewModelBase.RestartNeeded += OnRestartNeeded;
 
-			Disposable.Create(
-				() =>
-			{
-				SettingsTabViewModelBase.RestartNeeded -= OnRestartNeeded;
-			}).DisposeWith(disposable);
+			Disposable.Create(() => { SettingsTabViewModelBase.RestartNeeded -= OnRestartNeeded; })
+				.DisposeWith(disposable);
 		}
 	}
 }

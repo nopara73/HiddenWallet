@@ -34,15 +34,15 @@
 
         <TabControl SelectedIndex="{Binding SelectedTab, Mode=TwoWay}">
           <TabItem Header="General">
-            <v:GeneralSettingsView DataContext="{Binding GeneralTab}" />
+            <v:GeneralSettingsView DataContext="{Binding GeneralSettingsTab}" />
           </TabItem>
 
           <TabItem Header="Privacy">
-             <v:PrivacySettingsView DataContext="{Binding PrivacyTab}" />
+             <v:PrivacySettingsView DataContext="{Binding PrivacySettingsTab}" />
           </TabItem>
 
           <TabItem Header="Network">
-            <v:NetworkSettingsView DataContext="{Binding NetworkTab}" />
+            <v:NetworkSettingsView DataContext="{Binding NetworkSettingsTab}" />
           </TabItem>
 
           <TabItem Header="Bitcoin">

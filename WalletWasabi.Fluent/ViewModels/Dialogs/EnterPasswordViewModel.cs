@@ -6,10 +6,10 @@ using WalletWasabi.Userfacing;
 
 namespace WalletWasabi.Fluent.ViewModels.Dialogs
 {
-	public class EnterPasswordViewModel : DialogViewModelBase<string?>
+	public partial class EnterPasswordViewModel : DialogViewModelBase<string?>
 	{
-		private string? _confirmPassword;
-		private string? _password;
+		[AutoNotify] private string? _confirmPassword;
+		[AutoNotify] private string? _password;
 
 		public EnterPasswordViewModel(string subtitle)
 		{
@@ -43,18 +43,6 @@ namespace WalletWasabi.Fluent.ViewModels.Dialogs
 			BackCommand = ReactiveCommand.Create(() => Close(), backCommandCanExecute);
 			NextCommand = ReactiveCommand.Create(() => Close(Password), nextCommandCanExecute);
 			CancelCommand = ReactiveCommand.Create(() => Close(), cancelCommandCanExecute);
-		}
-
-		public string? Password
-		{
-			get => _password;
-			set => this.RaiseAndSetIfChanged(ref _password, value);
-		}
-
-		public string? ConfirmPassword
-		{
-			get => _confirmPassword;
-			set => this.RaiseAndSetIfChanged(ref _confirmPassword, value);
 		}
 
 		public string Subtitle { get; }
