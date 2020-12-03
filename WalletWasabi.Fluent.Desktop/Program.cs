@@ -35,48 +35,51 @@ namespace WalletWasabi.Fluent.Desktop
 		// yet and stuff might break.
 		public static void Main(string[] args)
 		{
+			Exception? appException = null;
 			bool runGui = false;
 
 			Locator.CurrentMutable.RegisterConstant(CrashReporter);
-
 			ProcessCliCrashReportArgs(args);
-
-			if (CrashReporter.IsReport)
-			{
-				StartCrashReporter(args);
-				return;
-			}
-
-			Exception? appException = null;
 
 			try
 			{
-
-				Global = CreateGlobal();
-				Locator.CurrentMutable.RegisterConstant(Global);
-
-				//Platform.BaseDirectory = Path.Combine(Global.DataDir, "Gui");
-				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-				TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-
-				runGui = ProcessCliCommands(args);
-
-				if (runGui)
+				if (CrashReporter.IsReport)
 				{
-					Logger.LogSoftwareStarted("Wasabi GUI");
+					runGui = true;
+					var dataDir = EnvironmentHelpers.GetDataDir(Path.Combine("WalletWasabi", "Client"));
+					Logger.InitializeDefaults(Path.Combine(dataDir, "Logs.txt"));
+					StartCrashReporter(args);
+				}
+				else
+				{
+					Global = CreateGlobal();
+					Locator.CurrentMutable.RegisterConstant(Global);
 
-					BuildAvaloniaApp()
-						.AfterSetup(_ =>
-						{
-							ThemeHelper.ApplyTheme(Global!.UiConfig.DarkModeEnabled);
-							AppMainAsync(args);
-						})
-						.StartWithClassicDesktopLifetime(args);
+					//Platform.BaseDirectory = Path.Combine(Global.DataDir, "Gui");
+					AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+					TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+					runGui = ProcessCliCommands(args);
+
+					if (runGui)
+					{
+						Logger.LogSoftwareStarted("Wasabi GUI");
+
+						BuildAvaloniaApp()
+							.AfterSetup(_ =>
+							{
+								ThemeHelper.ApplyTheme(Global!.UiConfig.DarkModeEnabled);
+								AppMainAsync(args);
+							})
+							.StartWithClassicDesktopLifetime(args);
+					}
 				}
 			}
 			catch (Exception ex)
 			{
 				appException = ex;
+				CrashReporter = new CrashReporter();
+				Locator.CurrentMutable.RegisterConstant(CrashReporter);
 			}
 
 			TerminateAppAndHandleException(appException, runGui);
@@ -147,10 +150,7 @@ namespace WalletWasabi.Fluent.Desktop
 			else if (ex is { })
 			{
 				Logger.LogCritical(ex);
-				if (runGui)
-				{
-					CrashReporter.SetException(ex);
-				}
+				CrashReporter.SetException(ex);
 			}
 
 			TerminateService.Terminate(ex is { } ? 1 : 0);
@@ -221,14 +221,11 @@ namespace WalletWasabi.Fluent.Desktop
 			}
 
 			result
-				.With(new Win32PlatformOptions { AllowEglInitialization = false, UseDeferredRendering = true })
-				.With(new X11PlatformOptions { UseGpu = false, WmClass = "Wasabi Wallet Crash Reporting" })
-				.With(new AvaloniaNativePlatformOptions { UseDeferredRendering = true, UseGpu = false })
-				.With(new MacOSPlatformOptions { ShowInDock = true })
-				.AfterSetup(_ =>
-				{
-					ThemeHelper.ApplyTheme(true);
-				})
+				.With(new Win32PlatformOptions {AllowEglInitialization = false, UseDeferredRendering = true})
+				.With(new X11PlatformOptions {UseGpu = false, WmClass = "Wasabi Wallet Crash Reporting"})
+				.With(new AvaloniaNativePlatformOptions {UseDeferredRendering = true, UseGpu = false})
+				.With(new MacOSPlatformOptions {ShowInDock = true})
+				.AfterSetup(_ => { ThemeHelper.ApplyTheme(true); })
 				.StartWithClassicDesktopLifetime(args);
 		}
 
@@ -257,10 +254,11 @@ namespace WalletWasabi.Fluent.Desktop
 			}
 
 			return result
-				.With(new Win32PlatformOptions { AllowEglInitialization = true, UseDeferredRendering = true, UseWindowsUIComposition = true })
-				.With(new X11PlatformOptions { UseGpu = useGpuLinux, WmClass = "Wasabi Wallet" })
-				.With(new AvaloniaNativePlatformOptions { UseDeferredRendering = true, UseGpu = true })
-				.With(new MacOSPlatformOptions { ShowInDock = true });
+				.With(new Win32PlatformOptions
+					{AllowEglInitialization = true, UseDeferredRendering = true, UseWindowsUIComposition = true})
+				.With(new X11PlatformOptions {UseGpu = useGpuLinux, WmClass = "Wasabi Wallet"})
+				.With(new AvaloniaNativePlatformOptions {UseDeferredRendering = true, UseGpu = true})
+				.With(new MacOSPlatformOptions {ShowInDock = true});
 		}
 	}
 }

@@ -18,12 +18,15 @@ namespace WalletWasabi.Gui.CrashReport
 
 		public void TryInvokeCrashReport()
 		{
+			Console.WriteLine("Trying to invoke...");
 			try
 			{
 				if (Attempts >= MaxRecursiveCalls)
 				{
-					throw new InvalidOperationException($"The crash report has been called {MaxRecursiveCalls} times. Will not continue to avoid recursion errors.");
+					throw new InvalidOperationException(
+						$"The crash report has been called {MaxRecursiveCalls} times. Will not continue to avoid recursion errors.");
 				}
+
 				if (string.IsNullOrEmpty(Base64ExceptionString))
 				{
 					throw new InvalidOperationException($"The crash report exception message is empty.");
@@ -31,8 +34,10 @@ namespace WalletWasabi.Gui.CrashReport
 
 				var args = $"crashreport -attempt=\"{Attempts + 1}\" -exception=\"{Base64ExceptionString}\"";
 
-				ProcessStartInfo startInfo = ProcessStartInfoFactory.Make(Process.GetCurrentProcess().MainModule.FileName, args);
-				using Process p = Process.Start(startInfo);
+				Console.WriteLine(Process.GetCurrentProcess().MainModule?.FileName);
+
+				var startInfo = ProcessStartInfoFactory.Make(Process.GetCurrentProcess().MainModule?.FileName, args);
+				using var p = Process.Start(startInfo);
 			}
 			catch (Exception ex)
 			{

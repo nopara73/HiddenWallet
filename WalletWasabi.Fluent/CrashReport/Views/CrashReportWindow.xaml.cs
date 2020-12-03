@@ -1,7 +1,7 @@
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using WalletWasabi.Gui;
 
 namespace WalletWasabi.Fluent.CrashReport.Views
 {
@@ -9,6 +9,8 @@ namespace WalletWasabi.Fluent.CrashReport.Views
 	{
 		public CrashReportWindow()
 		{
+			// Test if the crash reporter window itself crashes.
+			throw new Exception("Gremlins in the deck plating.");
 			InitializeComponent();
 #if DEBUG
 			this.AttachDevTools();
