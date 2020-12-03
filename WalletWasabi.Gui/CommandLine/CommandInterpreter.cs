@@ -109,8 +109,6 @@ namespace WalletWasabi.Gui.CommandLine
 			return false;
 		}
 
-
-		/// <returns>If the GUI should run or not.</returns>
 		public async Task<bool> ExecuteFluentCrashReporterCommand(string[] args, Command crashReportedCommand)
 		{
 			if (args.Length == 0)
@@ -125,7 +123,6 @@ namespace WalletWasabi.Gui.CommandLine
 
 			return await suite.RunAsync(args) == 0 && false;
 		}
-
 
 		private static void EnsureBackwardCompatibilityWithOldParameters(ref string[] args)
 		{
