@@ -33,7 +33,14 @@ namespace WalletWasabi.Gui.CrashReport
 				var mainExecutable = Process.GetCurrentProcess().MainModule?.FileName;
 				var args = $"crashreport -attempt=\"{Attempts + 1}\" -exception=\"{Base64ExceptionString}\"";
 
-				var startInfo = ProcessStartInfoFactory.Make(mainExecutable, args, true);
+				var startInfo = ProcessStartInfoFactory.Make(mainExecutable, args);
+
+				// Somehow, without these it doesnt
+				// spawn a new process, hence it terminates
+				// with the old process instead.
+				startInfo.RedirectStandardOutput = false;
+				startInfo.UseShellExecute = true;
+
 				using var p = Process.Start(startInfo);
 			}
 			catch (Exception ex)
