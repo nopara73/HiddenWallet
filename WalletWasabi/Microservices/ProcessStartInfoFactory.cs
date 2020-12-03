@@ -16,7 +16,7 @@ namespace WalletWasabi.Microservices
 		/// <param name="arguments">Process arguments.</param>
 		/// <param name="openConsole">Open console window. Only for Windows platform.</param>
 		/// <returns><see cref="ProcessStartInfo"/> instance.</returns>
-		public static ProcessStartInfo Make(string? processPath, string arguments, bool openConsole = false)
+		public static ProcessStartInfo Make(string processPath, string arguments, bool openConsole = false)
 		{
 			ProcessWindowStyle windowStyle;
 
