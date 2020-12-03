@@ -78,8 +78,7 @@ namespace WalletWasabi.Fluent.Desktop
 			catch (Exception ex)
 			{
 				appException = ex;
-				CrashReporter = new CrashReporter();
-				Locator.CurrentMutable.RegisterConstant(CrashReporter);
+				CrashReporter.ResetAndRetainAttemptsCount();
 			}
 
 			TerminateAppAndHandleException(appException, runGui);

@@ -62,5 +62,13 @@ namespace WalletWasabi.Gui.CrashReport
 			Base64ExceptionString = SerializableException.ToBase64String(SerializedException);
 			HadException = true;
 		}
+
+		public void ResetAndRetainAttemptsCount()
+		{
+			Base64ExceptionString = null;
+			IsReport = false;
+			HadException = false;
+			SerializedException = null;
+		}
 	}
 }
