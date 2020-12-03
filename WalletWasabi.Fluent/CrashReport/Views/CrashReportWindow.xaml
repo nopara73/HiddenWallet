@@ -1,10 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="using:WalletWasabi.Fluent.Views"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
-        xmlns:behaviors="clr-namespace:WalletWasabi.Gui.Behaviors;assembly=WalletWasabi.Gui"
         x:Class="WalletWasabi.Fluent.CrashReport.Views.CrashReportWindow"
         Icon="avares://WalletWasabi.Gui/Assets/WasabiLogo256.png"
         Title="{Binding Title}"
@@ -15,9 +10,6 @@
         WindowState="{Binding WindowState}"
         Classes="ToolWindow"
         CanResize="False">
-  <i:Interaction.Behaviors>
-    <behaviors:CloseWindowCommandBehavior Command="{Binding OkCommand}" />
-  </i:Interaction.Behaviors>
   <Panel>
     <Grid ColumnDefinitions="*,*,200" RowDefinitions="*,*,200" Opacity="0.05">
       <DrawingPresenter Grid.Column="2" Grid.Row="2" Margin="-50" Drawing="{DynamicResource WasabiLogo}" />

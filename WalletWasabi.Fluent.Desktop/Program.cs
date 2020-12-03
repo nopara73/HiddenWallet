@@ -52,8 +52,7 @@ namespace WalletWasabi.Fluent.Desktop
 
 				if (CrashReporter.IsReport)
 				{
-					Console.WriteLine("TODO Implement crash reporting.");
-					return;
+					StartCrashReporter(args);
 				}
 
 				if (runGui)
@@ -191,6 +190,34 @@ namespace WalletWasabi.Fluent.Desktop
 			{
 				Logger.LogWarning(ex);
 			}
+		}
+
+		private static void StartCrashReporter(string[] args)
+		{
+			var result = AppBuilder.Configure<WalletWasabi.Fluent.CrashReport.CrashReportApp>().UseReactiveUI();
+
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				result
+					.UseWin32()
+					.UseSkia();
+			}
+			else
+			{
+				result.UsePlatformDetect();
+			}
+
+			result
+				.With(new Win32PlatformOptions { AllowEglInitialization = false, UseDeferredRendering = true })
+				.With(new X11PlatformOptions { UseGpu = false, WmClass = "Wasabi Wallet Crash Reporting" })
+				.With(new AvaloniaNativePlatformOptions { UseDeferredRendering = true, UseGpu = false })
+				.With(new MacOSPlatformOptions { ShowInDock = true })
+				.AfterSetup(_ =>
+				{
+					ThemeHelper.ApplyTheme(Global!.UiConfig.DarkModeEnabled);
+					AppMainAsync(args);
+				})
+				.StartWithClassicDesktopLifetime(args);
 		}
 
 		// Avalonia configuration, don't remove; also used by visual designer.

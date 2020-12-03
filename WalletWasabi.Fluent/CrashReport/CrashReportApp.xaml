@@ -1,13 +1,27 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:WalletWasabi.Fluent"
              x:Class="WalletWasabi.Fluent.CrashReport.CrashReportApp">
+
+  <Application.DataTemplates>
+    <local:ViewLocator/>
+  </Application.DataTemplates>
+
+  <Application.Resources>
+    <x:Double x:Key="ToggleSwitchThemeMinWidth">0</x:Double>
+  </Application.Resources>
+
   <Application.Styles>
-    <StyleInclude Source="avares://Avalonia.Themes.Default/DefaultTheme.xaml" />
-    <StyleInclude Source="avares://AvalonStudio.Shell/Themes/BaseDark.xaml" />
-    <StyleInclude Source="avares://AvalonStudio.Shell/Themes/Accents/DarkAccent.xaml" />
-    <StyleInclude Source="avares://AvalonStudio.Shell/Icons/Icons.xaml" />
-    <StyleInclude Source="avares://AvalonStudio.Shell/Controls/MetroWindowTheme.paml" />
-    <StyleInclude Source="avares://WalletWasabi.Gui/Styles/Styles.xaml" />
-    <StyleInclude Source="avares://WalletWasabi.Gui/Icons/Icons.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Styles/Themes/BaseDark.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Icons/Icons.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Styles/Styles.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/ContentArea.axaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/InfoMessage.axaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/Dialog.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/ProgressRingArc.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/ProgressRing.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/TagsBox.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/NavBarItem.xaml" />
+    <StyleInclude Source="avares://WalletWasabi.Fluent/Controls/NavBarTreeItem.xaml" />
   </Application.Styles>
 </Application>
