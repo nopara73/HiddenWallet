@@ -35,25 +35,31 @@ namespace WalletWasabi.Fluent.Desktop
 		// yet and stuff might break.
 		public static void Main(string[] args)
 		{
-			bool runGui;
+			bool runGui = false;
+
+			Locator.CurrentMutable.RegisterConstant(CrashReporter);
+
+			ProcessCliCrashReportArgs(args);
+
+			if (CrashReporter.IsReport)
+			{
+				StartCrashReporter(args);
+				return;
+			}
+
 			Exception? appException = null;
 
 			try
 			{
+
 				Global = CreateGlobal();
 				Locator.CurrentMutable.RegisterConstant(Global);
-				Locator.CurrentMutable.RegisterConstant(CrashReporter);
 
 				//Platform.BaseDirectory = Path.Combine(Global.DataDir, "Gui");
 				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 				TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 
 				runGui = ProcessCliCommands(args);
-
-				if (CrashReporter.IsReport)
-				{
-					StartCrashReporter(args);
-				}
 
 				if (runGui)
 				{
@@ -71,7 +77,6 @@ namespace WalletWasabi.Fluent.Desktop
 			catch (Exception ex)
 			{
 				appException = ex;
-				throw;
 			}
 
 			TerminateAppAndHandleException(appException, runGui);
@@ -97,10 +102,18 @@ namespace WalletWasabi.Fluent.Desktop
 		{
 			var daemon = new Daemon(Global!, TerminateService);
 			var interpreter = new CommandInterpreter(Console.Out, Console.Error);
-			var executionTask = interpreter.ExecuteCommandsAsync(
+			var executionTask = interpreter.ExecuteFluentCommandsAsync(
 				args,
 				new MixerCommand(daemon),
-				new PasswordFinderCommand(Global!.WalletManager),
+				new PasswordFinderCommand(Global!.WalletManager));
+			return executionTask.GetAwaiter().GetResult();
+		}
+
+		private static bool ProcessCliCrashReportArgs(string[] args)
+		{
+			var interpreter = new CommandInterpreter(Console.Out, Console.Error);
+			var executionTask = interpreter.ExecuteFluentCrashReporterCommand(
+				args,
 				new CrashReportCommand(CrashReporter));
 			return executionTask.GetAwaiter().GetResult();
 		}
@@ -214,8 +227,7 @@ namespace WalletWasabi.Fluent.Desktop
 				.With(new MacOSPlatformOptions { ShowInDock = true })
 				.AfterSetup(_ =>
 				{
-					ThemeHelper.ApplyTheme(Global!.UiConfig.DarkModeEnabled);
-					AppMainAsync(args);
+					ThemeHelper.ApplyTheme(true);
 				})
 				.StartWithClassicDesktopLifetime(args);
 		}

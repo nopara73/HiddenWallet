@@ -63,6 +63,70 @@ namespace WalletWasabi.Gui.CommandLine
 			return false;
 		}
 
+
+		/// <returns>If the GUI should run or not.</returns>
+		public async Task<bool> ExecuteFluentCommandsAsync(string[] args, Command mixerCommand, Command passwordFinderCommand)
+		{
+			var showHelp = false;
+			var showVersion = false;
+
+			if (args.Length == 0)
+			{
+				return true;
+			}
+
+			var suite = new CommandSet("wassabee", Out, Error)
+			{
+				"Usage: wassabee [OPTIONS]+",
+				"Launches Wasabi Wallet.",
+				"",
+				{ "h|help", "Displays help page and exit.", x => showHelp = x is { } },
+				{ "v|version", "Displays Wasabi version and exit.", x => showVersion = x is { } },
+				"",
+				"Available commands are:",
+				"",
+				mixerCommand,
+				passwordFinderCommand
+			};
+
+			EnsureBackwardCompatibilityWithOldParameters(ref args);
+			if (await suite.RunAsync(args) == 0)
+			{
+				return false;
+			}
+			if (showHelp)
+			{
+				ShowVersion();
+				await suite.RunAsync(new string[] { "--help" });
+				return false;
+			}
+			else if (showVersion)
+			{
+				ShowVersion();
+				return false;
+			}
+
+			return false;
+		}
+
+
+		/// <returns>If the GUI should run or not.</returns>
+		public async Task<bool> ExecuteFluentCrashReporterCommand(string[] args, Command crashReportedCommand)
+		{
+			if (args.Length == 0)
+			{
+				return true;
+			}
+
+			var suite = new CommandSet("wassabee", Out, Error)
+			{
+				crashReportedCommand
+			};
+
+			return await suite.RunAsync(args) == 0 && false;
+		}
+
+
 		private static void EnsureBackwardCompatibilityWithOldParameters(ref string[] args)
 		{
 			var listArgs = args.ToList();
