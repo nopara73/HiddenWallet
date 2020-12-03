@@ -1,4 +1,6 @@
+using System;
 using System.Text;
+using WalletWasabi.Extensions;
 using WalletWasabi.Hwi.Models;
 
 namespace WalletWasabi.Gui.Tabs.WalletManager.HardwareWallets
@@ -7,7 +9,7 @@ namespace WalletWasabi.Gui.Tabs.WalletManager.HardwareWallets
 	{
 		public HardwareWalletViewModel(HwiEnumerateEntry hwi)
 		{
-			string typeString = hwi.Model.ToString();
+			string typeString = hwi.Model.FriendlyName();
 			var walletNameBuilder = new StringBuilder(typeString);
 
 			if (hwi.NeedsPinSent is true)
@@ -30,6 +32,10 @@ namespace WalletWasabi.Gui.Tabs.WalletManager.HardwareWallets
 			{
 				walletNameBuilder.Append(" - Could Not Acquire Fingerprint");
 			}
+			else if (!hwi.IsInitialized())
+			{
+				walletNameBuilder.Append(" - Not initialized.");
+			}
 
 			WalletName = walletNameBuilder.ToString();
 			HardwareWalletInfo = hwi;
@@ -41,6 +47,19 @@ namespace WalletWasabi.Gui.Tabs.WalletManager.HardwareWallets
 		public override string ToString()
 		{
 			return WalletName;
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return obj is HardwareWalletViewModel otherWallet &&
+			       otherWallet.HardwareWalletInfo.Model == HardwareWalletInfo.Model &&
+			       otherWallet.HardwareWalletInfo.Path == HardwareWalletInfo.Path &&
+			       otherWallet.HardwareWalletInfo.Fingerprint == HardwareWalletInfo.Fingerprint;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(HardwareWalletInfo.Model, HardwareWalletInfo.Path, HardwareWalletInfo.Fingerprint);
 		}
 	}
 }

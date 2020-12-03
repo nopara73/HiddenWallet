@@ -11,19 +11,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletWasabi", "..\WalletWa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6611C6DA-01B6-4C7D-ACD9-F212DD5D66BD}"
 	ProjectSection(SolutionItems) = preProject
-		.coverage.sh = ../.coverage.sh
-		.editorconfig = ../.editorconfig
-		.gitattributes = ../.gitattributes
-		.gitignore = ../.gitignore
-		.gitmodules = ../.gitmodules
-		azure-pipelines-linux.yml = ../azure-pipelines-linux.yml
-		azure-pipelines-osx.yml = ../azure-pipelines-osx.yml
-		azure-pipelines-quality.yml = ../azure-pipelines-quality.yml
-		azure-pipelines-windows.yml = ../azure-pipelines-windows.yml
-		CONTRIBUTING.md = ../CONTRIBUTING.md
-		Directory.Build.props = ../Directory.Build.props
-		README.md = ../README.md
-		Settings.StyleCop = ../Settings.StyleCop
+		..\.editorconfig = ..\.editorconfig
+		..\.gitattributes = ..\.gitattributes
+		..\.gitignore = ..\.gitignore
+		..\azure-pipelines-linux.yml = ..\azure-pipelines-linux.yml
+		..\azure-pipelines-osx.yml = ..\azure-pipelines-osx.yml
+		..\azure-pipelines-windows.yml = ..\azure-pipelines-windows.yml
+		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
+		..\Directory.Build.props = ..\Directory.Build.props
+		..\README.md = ..\README.md
+		..\Settings.StyleCop = ..\Settings.StyleCop
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletWasabi.Gui", "..\WalletWasabi.Gui\WalletWasabi.Gui.csproj", "{B007DC0F-8C86-439D-BE3C-283218D8308B}"

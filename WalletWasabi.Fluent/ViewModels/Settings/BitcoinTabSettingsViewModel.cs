@@ -22,7 +22,7 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 			"Settings", "Bitcoin", "Network", "Main", "TestNet", "RegTest", "Run", "Knots", "Startup", "P2P", "Endpoint"
 		},
 		IconName = "settings_bitcoin_regular")]
-	public partial class BitcoinTabViewModel : SettingsTabViewModelBase
+	public partial class BitcoinTabSettingsViewModel : SettingsTabViewModelBase
 	{
 		[AutoNotify] private Network _network;
 		[AutoNotify] private bool _startLocalBitcoinCoreOnStartup;
@@ -30,7 +30,7 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 		[AutoNotify] private bool _stopLocalBitcoinCoreOnShutdown;
 		[AutoNotify] private string _bitcoinP2PEndPoint;
 
-		public BitcoinTabViewModel(Config config, UiConfig uiConfig) : base(config, uiConfig)
+		public BitcoinTabSettingsViewModel(Config config, UiConfig uiConfig) : base(config, uiConfig)
 		{
 			this.ValidateProperty(x => x.BitcoinP2PEndPoint, ValidateBitcoinP2PEndPoint);
 

@@ -62,7 +62,7 @@
             </StackPanel>
           </Button>
 
-          <Button Classes="option">
+          <Button Classes="option" Command="{Binding ConnectHardwareWalletCommand}">
             <StackPanel Orientation="Horizontal">
               <PathIcon DockPanel.Dock="Left" Margin="20" Data="{StaticResource web_asset_regular}"
                         Width="16" VerticalAlignment="Center" />

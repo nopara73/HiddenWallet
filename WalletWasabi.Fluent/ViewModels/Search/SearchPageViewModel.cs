@@ -13,6 +13,7 @@ namespace WalletWasabi.Fluent.ViewModels.Search
 {
 	[NavigationMetaData(
 		Title = "Search",
+		IconName = "search_regular",
 		Searchable = false,
 		NavBarPosition = NavBarPosition.Bottom)]
 	public partial class SearchPageViewModel : NavBarItemViewModel
@@ -29,8 +30,6 @@ namespace WalletWasabi.Fluent.ViewModels.Search
 			_categories = new Dictionary<string, SearchCategory>();
 			_categorySources = new Dictionary<SearchCategory, SourceList<SearchItemViewModel>>();
 		}
-
-		public override string IconName => "search_regular";
 
 		public ReadOnlyObservableCollection<SearchResult> SearchResults => _searchResults!;
 

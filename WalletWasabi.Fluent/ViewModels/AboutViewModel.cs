@@ -19,7 +19,8 @@ namespace WalletWasabi.Fluent.ViewModels
 		Order = 4,
 		Category = "General",
 		Keywords = new[] { "About", "Software", "Version", "Source", "Code", "Github", "Status", "Stats", "Tor", "Onion", "Bug", "Report", "FAQ", "Questions,", "Docs", "Documentation", "Link", "Links", "Help" },
-		NavBarPosition = NavBarPosition.None)]
+		NavBarPosition = NavBarPosition.None,
+		NavigationTarget = NavigationTarget.DialogScreen)]
 	public partial class AboutViewModel : RoutableViewModel
 	{
 		public AboutViewModel()
@@ -38,8 +39,6 @@ namespace WalletWasabi.Fluent.ViewModels
 				.ObserveOn(RxApp.TaskpoolScheduler)
 				.Subscribe(ex => Logger.LogError(ex));
 		}
-
-		public override NavigationTarget DefaultTarget => NavigationTarget.DialogScreen;
 
 		public ICommand AboutAdvancedInfoDialogCommand { get; }
 

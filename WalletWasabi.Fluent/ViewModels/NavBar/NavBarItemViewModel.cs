@@ -1,3 +1,4 @@
+using System;
 using ReactiveUI;
 using System.Windows.Input;
 using WalletWasabi.Fluent.ViewModels.Navigation;
@@ -14,8 +15,8 @@ namespace WalletWasabi.Fluent.ViewModels.NavBar
 	public abstract partial class NavBarItemViewModel : RoutableViewModel
 	{
 		private bool _isSelected;
-		private bool _isExpanded;
 
+		[AutoNotify] private bool _isExpanded;
 		[AutoNotify] private string _title;
 
 		protected NavBarItemViewModel()
@@ -27,27 +28,20 @@ namespace WalletWasabi.Fluent.ViewModels.NavBar
 				{
 					Navigate().To(this, NavigationMode.Clear);
 				});
+
+			this.WhenAnyValue(x => x.IsExpanded)
+				.Subscribe(x =>
+				{
+					if (Parent != null)
+					{
+						Parent.IsExpanded = x;
+					}
+				});
 		}
 
 		public NavBarItemViewModel? Parent { get; set; }
 
-		public abstract string IconName { get; }
-
 		public NavBarItemSelectionMode SelectionMode { get; protected set; }
-
-		public bool IsExpanded
-		{
-			get => _isExpanded;
-			set
-			{
-				this.RaiseAndSetIfChanged(ref _isExpanded, value);
-
-				if (Parent != null)
-				{
-					Parent.IsExpanded = value;
-				}
-			}
-		}
 
 		public bool IsSelected
 		{

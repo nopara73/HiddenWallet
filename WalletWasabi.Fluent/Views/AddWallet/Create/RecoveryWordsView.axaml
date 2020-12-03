@@ -3,12 +3,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:c="using:WalletWasabi.Fluent.Controls"
-             xmlns:v="using:WalletWasabi.Fluent.ViewModels.AddWallet"
+             xmlns:create="clr-namespace:WalletWasabi.Fluent.ViewModels.AddWallet.Create"
              mc:Ignorable="d"
              d:DesignWidth="600" d:DesignHeight="500"
              x:CompileBindings="True"
-             x:DataType="v:RecoveryWordsViewModel"
-             x:Class="WalletWasabi.Fluent.Views.AddWallet.RecoveryWordsView">
+             x:DataType="create:RecoveryWordsViewModel"
+             x:Class="WalletWasabi.Fluent.Views.AddWallet.Create.RecoveryWordsView">
   <c:ContentArea Title="Recovery words"
                  Caption="Write down the following numbered recovery words in order. These can be used to recover your wallet in the future. It is very important you keep them in a safe place."
                  EnableCancel="True" CancelContent="Cancel"

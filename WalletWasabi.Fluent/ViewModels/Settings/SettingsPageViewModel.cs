@@ -28,15 +28,13 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 			GeneralSettingsTab = new GeneralSettingsTabViewModel(config, uiConfig);
 			PrivacySettingsTab = new PrivacySettingsTabViewModel(config, uiConfig);
 			NetworkSettingsTab = new NetworkSettingsTabViewModel(config, uiConfig);
-			BitcoinTab = new BitcoinTabViewModel(config, uiConfig);
+			BitcoinTabSettings = new BitcoinTabSettingsViewModel(config, uiConfig);
 		}
 
 		public GeneralSettingsTabViewModel GeneralSettingsTab { get; }
 		public PrivacySettingsTabViewModel PrivacySettingsTab { get; }
 		public NetworkSettingsTabViewModel NetworkSettingsTab { get; }
-		public BitcoinTabViewModel BitcoinTab { get; }
-
-		public override string IconName => "settings_regular";
+		public BitcoinTabSettingsViewModel BitcoinTabSettings { get; }
 
 		private void OnRestartNeeded(object? sender, RestartNeededEventArgs e)
 		{

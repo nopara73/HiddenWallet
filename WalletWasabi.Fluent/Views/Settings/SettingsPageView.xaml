@@ -46,7 +46,7 @@
           </TabItem>
 
           <TabItem Header="Bitcoin">
-            <v:BitCoinSettingsView DataContext="{Binding BitcoinTab}" />
+            <v:BitCoinSettingsView DataContext="{Binding BitcoinTabSettings}" />
           </TabItem>
         </TabControl>
       </DockPanel>

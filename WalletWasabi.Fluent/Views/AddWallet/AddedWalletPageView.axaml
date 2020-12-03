@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WalletWasabi.Fluent.ViewModels.AddWallet"
+             xmlns:c="using:WalletWasabi.Fluent.Controls"
+             xmlns:conv="using:WalletWasabi.Fluent.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:AddedWalletPageViewModel"
+             x:CompileBindings="True"
+             x:Class="WalletWasabi.Fluent.Views.AddWallet.AddedWalletPageView">
+  <c:ContentArea Title="Success" NextContent="Done" EnableNext="True" EnableCancel="False" EnableBack="False">
+    <StackPanel VerticalAlignment="Center" Spacing="40">
+      <Image Height="180" Source="{Binding Path='Type', Converter={x:Static conv:WalletTypeImageConverter.Instance}}" />
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        <TextBlock Text="Your wallet " />
+        <TextBlock Text="{Binding WalletName}" FontWeight="Bold"/>
+        <TextBlock Text=" was added to Wasabi." />
+      </StackPanel>
+    </StackPanel>
+  </c:ContentArea>
+</UserControl>

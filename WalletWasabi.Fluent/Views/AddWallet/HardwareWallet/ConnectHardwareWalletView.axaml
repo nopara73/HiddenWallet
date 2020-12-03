@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:c="clr-namespace:WalletWasabi.Fluent.Controls"
+             xmlns:hardwareWallet="clr-namespace:WalletWasabi.Fluent.ViewModels.AddWallet.HardwareWallet"
+             mc:Ignorable="d"
+             d:DesignWidth="600" d:DesignHeight="500"
+             x:DataType="hardwareWallet:ConnectHardwareWalletViewModel"
+             x:CompileBindings="True"
+             x:Class="WalletWasabi.Fluent.Views.AddWallet.HardwareWallet.ConnectHardwareWalletView">
+
+  <c:ContentArea Title="Hardware Wallet"
+                 Caption="Connect your hardware wallet to the PC"
+                 EnableCancel="True" CancelContent="Cancel"
+                 EnableBack="True"
+                 EnableNext="{Binding ContinueButtonEnable}" NextContent="Continue"
+                 IsBusy="{Binding IsBusy}">
+    <DockPanel LastChildFill="True">
+
+      <StackPanel DockPanel.Dock="Top" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0 20 0 0" Spacing="40" Orientation="Horizontal">
+          <Image Height="100" Source="/Assets/HardwareIcons/ledger.png" />
+          <Image Height="100" Source="/Assets/HardwareIcons/coldcard.png" />
+          <Image Height="100" Source="/Assets/HardwareIcons/trezor.png" />
+          <Image Height="100" Source="/Assets/HardwareIcons/generic.png" />
+      </StackPanel>
+
+      <Panel DockPanel.Dock="Bottom">
+        <TextBlock Text="{Binding Message}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0 0 0 200"/>
+        <c:ProgressRing IsVisible="{Binding !ContinueButtonEnable}" IsIndeterminate="True" VerticalAlignment="Center" HorizontalAlignment="Center" Height="100" Width="100" />
+        <Button Content="More information and help with Hardware Wallets" Classes="h8 plain activeHyperLink" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="{DynamicResource SystemAccentColor}" />
+      </Panel>
+
+    </DockPanel>
+  </c:ContentArea>
+</UserControl>

@@ -12,7 +12,7 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets
 	public abstract partial class WalletViewModelBase : NavBarItemViewModel, IComparable<WalletViewModelBase>, IDisposable
 	{
 		[AutoNotify] private string _titleTip;
-		private WalletState _walletState;
+		[AutoNotify(SetterModifier = AccessModifier.Private)] private WalletState _walletState;
 		private CompositeDisposable? _disposables;
 		private bool _disposedValue;
 
@@ -33,12 +33,6 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets
 				.ObserveOn(RxApp.MainThreadScheduler)
 				.Subscribe(x => WalletState = x.EventArgs)
 				.DisposeWith(_disposables);
-		}
-
-		public WalletState WalletState
-		{
-			get => _walletState;
-			private set => this.RaiseAndSetIfChanged(ref _walletState, value);
 		}
 
 		public Wallet Wallet { get; }

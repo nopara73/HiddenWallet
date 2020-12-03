@@ -3,14 +3,6 @@ using WalletWasabi.Fluent.ViewModels.Dialogs;
 
 namespace WalletWasabi.Fluent.ViewModels.Navigation
 {
-	public enum NavigationTarget
-	{
-		Default = 0,
-		HomeScreen = 1,
-		DialogScreen = 2,
-		DialogHost = 3
-	}
-
 	public class NavigationState
 	{
 		private NavigationState(INavigationStack<RoutableViewModel> homeScreenNavigation, INavigationStack<RoutableViewModel> dialogScreenNavigation, Func<IDialogHost> dialogHost)

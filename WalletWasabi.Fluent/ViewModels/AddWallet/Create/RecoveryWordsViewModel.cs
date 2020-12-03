@@ -5,7 +5,7 @@ using WalletWasabi.Blockchain.Keys;
 using WalletWasabi.Fluent.ViewModels.Navigation;
 using WalletWasabi.Wallets;
 
-namespace WalletWasabi.Fluent.ViewModels.AddWallet
+namespace WalletWasabi.Fluent.ViewModels.AddWallet.Create
 {
 	public class RecoveryWordsViewModel : RoutableViewModel
 	{

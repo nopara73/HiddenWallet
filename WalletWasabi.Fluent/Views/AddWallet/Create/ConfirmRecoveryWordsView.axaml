@@ -6,12 +6,12 @@
              xmlns:behaviors="using:WalletWasabi.Fluent.Behaviors"
              xmlns:conv="using:WalletWasabi.Fluent.Converters"
              xmlns:c="using:WalletWasabi.Fluent.Controls"
-             xmlns:v="using:WalletWasabi.Fluent.ViewModels.AddWallet"
+             xmlns:create="clr-namespace:WalletWasabi.Fluent.ViewModels.AddWallet.Create"
              mc:Ignorable="d"
              d:DesignWidth="600" d:DesignHeight="500"
-             x:DataType="v:ConfirmRecoveryWordsViewModel"
+             x:DataType="create:ConfirmRecoveryWordsViewModel"
              x:CompileBindings="True"
-             x:Class="WalletWasabi.Fluent.Views.AddWallet.ConfirmRecoveryWordsView">
+             x:Class="WalletWasabi.Fluent.Views.AddWallet.Create.ConfirmRecoveryWordsView">
   <UserControl.KeyBindings>
     <KeyBinding Gesture="Enter" Command="{Binding NextCommand}" />
   </UserControl.KeyBindings>

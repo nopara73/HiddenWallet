@@ -39,7 +39,7 @@
                   <behaviors:FocusOnAttachedBehavior IsEnabled="{Binding FocusCancel, RelativeSource={RelativeSource TemplatedParent}}" />
                 </i:Interaction.Behaviors>
               </Button>
-              <Button Name="PART_NextButton" Classes="action" IsVisible="{TemplateBinding EnableNext}" Content="{TemplateBinding NextContent}" Margin="10,10,0,10" HorizontalAlignment="Right" Command="{Binding NextCommand}">
+              <Button Name="PART_NextButton" Classes="action" IsVisible="{TemplateBinding EnableNext}" Content="{TemplateBinding NextContent}" Margin="10,10,0,10" HorizontalAlignment="Right" Command="{Binding NextCommand}" IsDefault="True">
                 <i:Interaction.Behaviors>
                   <behaviors:FocusOnAttachedBehavior IsEnabled="{Binding FocusNext, RelativeSource={RelativeSource TemplatedParent}}" />
                 </i:Interaction.Behaviors>

@@ -47,8 +47,6 @@ namespace WalletWasabi.Fluent.ViewModels
 				() => IoHelpers.OpenFolderInFileExplorer(walletManager.Model.WalletDirectories.WalletsDir));
 		}
 
-		public override string IconName => MetaData.IconName;
-
 		public ReadOnlyObservableCollection<NavBarItemViewModel> Items => _items;
 
 		public ReactiveCommand<Unit, Unit> OpenWalletsFolderCommand { get; }
