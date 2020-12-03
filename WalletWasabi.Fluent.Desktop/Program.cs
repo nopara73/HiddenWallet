@@ -149,7 +149,10 @@ namespace WalletWasabi.Fluent.Desktop
 			else if (ex is { })
 			{
 				Logger.LogCritical(ex);
-				CrashReporter.SetException(ex);
+				if (runGui)
+				{
+					CrashReporter.SetException(ex);
+				}
 			}
 
 			TerminateService.Terminate(ex is { } ? 1 : 0);
