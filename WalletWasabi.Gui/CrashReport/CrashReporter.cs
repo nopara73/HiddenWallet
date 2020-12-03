@@ -34,9 +34,15 @@ namespace WalletWasabi.Gui.CrashReport
 
 				var args = $"crashreport -attempt=\"{Attempts + 1}\" -exception=\"{Base64ExceptionString}\"";
 
-				Console.WriteLine(Process.GetCurrentProcess().MainModule?.FileName);
+				var h = Process.GetCurrentProcess().MainModule?.FileName;
+				Console.WriteLine(args);
+				Console.WriteLine(h);
 
-				var startInfo = ProcessStartInfoFactory.Make(Process.GetCurrentProcess().MainModule?.FileName, args);
+				var startInfo = ProcessStartInfoFactory.Make(h, args);
+				startInfo.RedirectStandardError = false;
+				startInfo.RedirectStandardInput = false;
+				startInfo.RedirectStandardOutput = false;
+				startInfo.UseShellExecute = true;
 				using var p = Process.Start(startInfo);
 			}
 			catch (Exception ex)
