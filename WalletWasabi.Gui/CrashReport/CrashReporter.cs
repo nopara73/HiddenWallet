@@ -24,24 +24,15 @@ namespace WalletWasabi.Gui.CrashReport
 				{
 					throw new InvalidOperationException($"The crash report has been called {MaxRecursiveCalls} times. Will not continue to avoid recursion errors.");
 				}
-
 				if (string.IsNullOrEmpty(Base64ExceptionString))
 				{
 					throw new InvalidOperationException($"The crash report exception message is empty.");
 				}
 
-				var mainExecutable = Process.GetCurrentProcess().MainModule?.FileName;
 				var args = $"crashreport -attempt=\"{Attempts + 1}\" -exception=\"{Base64ExceptionString}\"";
 
-				var startInfo = ProcessStartInfoFactory.Make(mainExecutable, args);
-
-				// Somehow, without these it doesnt
-				// spawn a new process, hence it terminates
-				// with the old process instead.
-				startInfo.RedirectStandardOutput = false;
-				startInfo.UseShellExecute = true;
-
-				using var p = Process.Start(startInfo);
+				ProcessStartInfo startInfo = ProcessStartInfoFactory.Make(Process.GetCurrentProcess().MainModule.FileName, args);
+				using Process p = Process.Start(startInfo);
 			}
 			catch (Exception ex)
 			{
@@ -65,14 +56,6 @@ namespace WalletWasabi.Gui.CrashReport
 			SerializedException = ex.ToSerializableException();
 			Base64ExceptionString = SerializableException.ToBase64String(SerializedException);
 			HadException = true;
-		}
-
-		public void ResetAndRetainAttemptsCount()
-		{
-			Base64ExceptionString = null;
-			IsReport = false;
-			HadException = false;
-			SerializedException = null;
 		}
 	}
 }

@@ -2,25 +2,26 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="using:Avalonia.Xaml.Interactivity"
         xmlns:behaviors="using:WalletWasabi.Fluent.Behaviors"
+        xmlns:vm="using:WalletWasabi.Fluent.CrashReport.ViewModels"
+        xmlns:controls="clr-namespace:WalletWasabi.Fluent.Controls"
         x:Class="WalletWasabi.Fluent.CrashReport.Views.CrashReportWindow"
-        Icon="avares://WalletWasabi.Gui/Assets/WasabiLogo256.png"
+        Width="600" Height="500"
         Title="{Binding Title}"
-        MinWidth="{Binding MinWidth}" MinHeight="{Binding MinHeight}"
-        Width="{Binding MinWidth, Mode=OneTime}" Height="{Binding MinHeight, Mode=OneTime}"
-        WindowState="{Binding WindowState}"
+        x:CompileBindings="True"
+        x:DataType="vm:CrashReportWindowViewModel"
         CanResize="False">
   <i:Interaction.Behaviors>
     <behaviors:CloseWindowCommandBehavior Command="{Binding OkCommand}" />
   </i:Interaction.Behaviors>
   <Panel>
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="25,0,25,25">
-      <TextBlock Grid.Row="0" Text="{Binding ReportTitle}" FontSize="25" FontWeight="Bold" Margin="0,0,0,12" />
-      <TextBlock Grid.Row="1" Text="{Binding Details}" Margin="0,0,0,2" TextWrapping="Wrap" />
-      <TextBox Grid.Row="2" Text="{Binding Message}" FontSize="14" FontStyle="Italic" Background="Transparent" />
-      <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5" Margin="0,8,0,0">
-        <Button MinWidth="135" Height="35" Command="{Binding OpenLogCommand}">Open logs</Button>
-        <Button MinWidth="135" Height="35" Background="{DynamicResource ThemeAccentBrush}" Command="{Binding OkCommand}">Ok</Button>
-      </StackPanel>
-    </Grid>
+    <controls:ContentArea Title="{Binding ReportTitle}"
+                          EnableNext="True"
+                          NextContent="Exit"
+                          FocusNext="True">
+      <DockPanel LastChildFill="True">
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Details}"/>
+        <TextBox Text="{Binding Message}" />
+      </DockPanel>
+    </controls:ContentArea>
   </Panel>
 </Window>
