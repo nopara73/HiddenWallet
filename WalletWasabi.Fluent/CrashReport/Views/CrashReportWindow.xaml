@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="using:Avalonia.Xaml.Interactivity"
+        xmlns:behaviors="using:WalletWasabi.Fluent.Behaviors"
+        xmlns:vm="using:WalletWasabi.Fluent.CrashReport.ViewModels"
+        xmlns:controls="clr-namespace:WalletWasabi.Fluent.Controls"
+        x:Class="WalletWasabi.Fluent.CrashReport.Views.CrashReportWindow"
+        Width="600" Height="500"
+        MinWidth="600" MinHeight="500"
+        MaxWidth="600" MaxHeight="500"
+        Title="Wasabi Wallet - Crash Reporting"
+        x:CompileBindings="True"
+        x:DataType="vm:CrashReportWindowViewModel"
+        CanResize="False">
+  <i:Interaction.Behaviors>
+    <behaviors:CloseWindowCommandBehavior Command="{Binding ExitCommand}" />
+  </i:Interaction.Behaviors>
+  <Panel>
+    <controls:ContentArea Title="{Binding Title}"
+                          EnableNext="True"
+                          NextContent="Exit"
+                          EnableCancel="True"
+                          CancelContent="Open Logs"
+                          FocusNext="True"
+                          Margin="0 10 0 0">
+      <DockPanel LastChildFill="True">
+        <TextBlock DockPanel.Dock="Top" TextWrapping="WrapWithOverflow" Text="{Binding Details}"/>
+        <TextBox Classes="selectable_text_block" ScrollViewer.HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap" Margin="0 10 0 0" Text="{Binding Message}" />
+      </DockPanel>
+    </controls:ContentArea>
+  </Panel>
+</Window>

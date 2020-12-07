@@ -18,6 +18,9 @@ using WalletWasabi.Helpers;
 using WalletWasabi.Logging;
 using WalletWasabi.Services.Terminate;
 using WalletWasabi.Wallets;
+using CrashReporter = WalletWasabi.Fluent.CrashReport.CrashReporter;
+using CrashReportCommand = WalletWasabi.Fluent.CrashReport.CrashReportCommand;
+using CrashReportApp = WalletWasabi.Fluent.CrashReport.CrashReportApp;
 
 namespace WalletWasabi.Fluent.Desktop
 {
@@ -26,7 +29,7 @@ namespace WalletWasabi.Fluent.Desktop
 		private static Global? Global;
 
 		// This is only needed to pass CrashReporter to AppMainAsync otherwise it could be a local variable in Main().
-		private static CrashReporter CrashReporter = new CrashReporter();
+		private static CrashReporter CrashReporterInstance = new CrashReporter();
 
 		private static TerminateService TerminateService = new TerminateService(TerminateApplicationAsync);
 
@@ -35,44 +38,47 @@ namespace WalletWasabi.Fluent.Desktop
 		// yet and stuff might break.
 		public static void Main(string[] args)
 		{
-			bool runGui;
 			Exception? appException = null;
+
+			bool runGui = ProcessCliCrashReportArgs(args);
 
 			try
 			{
-				Global = CreateGlobal();
-				Locator.CurrentMutable.RegisterConstant(Global);
-				Locator.CurrentMutable.RegisterConstant(CrashReporter);
-
-				//Platform.BaseDirectory = Path.Combine(Global.DataDir, "Gui");
-				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-				TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-
-				runGui = ProcessCliCommands(args);
-
-				if (CrashReporter.IsReport)
+				if (CrashReporterInstance.IsReport)
 				{
-					Console.WriteLine("TODO Implement crash reporting.");
-					return;
+					var dataDir = EnvironmentHelpers.GetDataDir(Path.Combine("WalletWasabi", "Client"));
+					Logger.InitializeDefaults(Path.Combine(dataDir, "Logs.txt"));
+					BuildCrashReporter(CrashReporterInstance).StartWithClassicDesktopLifetime(args);
 				}
-
-				if (runGui)
+				else
 				{
-					Logger.LogSoftwareStarted("Wasabi GUI");
+					Global = CreateGlobal();
+					Locator.CurrentMutable.RegisterConstant(Global);
 
-					BuildAvaloniaApp()
-						.AfterSetup(_ =>
-						{
-							ThemeHelper.ApplyTheme(Global!.UiConfig.DarkModeEnabled);
-							AppMainAsync(args);
-						})
-						.StartWithClassicDesktopLifetime(args);
+					//Platform.BaseDirectory = Path.Combine(Global.DataDir, "Gui");
+					AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+					TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+					runGui = ProcessCliCommands(args);
+
+					if (runGui)
+					{
+						Logger.LogSoftwareStarted("Wasabi GUI");
+
+						BuildAvaloniaApp()
+							.AfterSetup(_ =>
+							{
+								ThemeHelper.ApplyTheme(Global!.UiConfig.DarkModeEnabled);
+								AppMainAsync(args);
+							})
+							.StartWithClassicDesktopLifetime(args);
+					}
 				}
 			}
 			catch (Exception ex)
 			{
 				appException = ex;
-				throw;
+				CrashReporterInstance.ResetAndRetainAttemptsCount();
 			}
 
 			TerminateAppAndHandleException(appException, runGui);
@@ -98,11 +104,19 @@ namespace WalletWasabi.Fluent.Desktop
 		{
 			var daemon = new Daemon(Global!, TerminateService);
 			var interpreter = new CommandInterpreter(Console.Out, Console.Error);
-			var executionTask = interpreter.ExecuteCommandsAsync(
+			var executionTask = interpreter.ExecuteFluentCommandsAsync(
 				args,
 				new MixerCommand(daemon),
-				new PasswordFinderCommand(Global!.WalletManager),
-				new CrashReportCommand(CrashReporter));
+				new PasswordFinderCommand(Global!.WalletManager));
+			return executionTask.GetAwaiter().GetResult();
+		}
+
+		private static bool ProcessCliCrashReportArgs(string[] args)
+		{
+			var interpreter = new CommandInterpreter(Console.Out, Console.Error);
+			var executionTask = interpreter.ExecuteFluentCrashReporterCommand(
+				args,
+				new CrashReportCommand(CrashReporterInstance));
 			return executionTask.GetAwaiter().GetResult();
 		}
 
@@ -137,7 +151,7 @@ namespace WalletWasabi.Fluent.Desktop
 				Logger.LogCritical(ex);
 				if (runGui)
 				{
-					CrashReporter.SetException(ex);
+					CrashReporterInstance.SetException(ex);
 				}
 			}
 
@@ -155,10 +169,10 @@ namespace WalletWasabi.Fluent.Desktop
 				mainViewModel.Dispose();
 			}
 
-			if (CrashReporter.IsInvokeRequired is true)
+			if (CrashReporterInstance.IsInvokeRequired is true)
 			{
 				// Trigger the CrashReport process.
-				CrashReporter.TryInvokeCrashReport();
+				CrashReporterInstance.TryInvokeCrashReport();
 			}
 
 			if (Global is { } global)
@@ -192,6 +206,32 @@ namespace WalletWasabi.Fluent.Desktop
 				Logger.LogWarning(ex);
 			}
 		}
+
+		private static AppBuilder BuildCrashReporter(CrashReporter crashReporter)
+		{
+			var result = AppBuilder
+				.Configure(() => new CrashReportApp(crashReporter))
+				.UseReactiveUI();
+
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				result
+					.UseWin32()
+					.UseSkia();
+			}
+			else
+			{
+				result.UsePlatformDetect();
+			}
+
+			return result
+				.With(new Win32PlatformOptions {AllowEglInitialization = false, UseDeferredRendering = true})
+				.With(new X11PlatformOptions {UseGpu = false, WmClass = "Wasabi Wallet Crash Reporting"})
+				.With(new AvaloniaNativePlatformOptions {UseDeferredRendering = true, UseGpu = false})
+				.With(new MacOSPlatformOptions {ShowInDock = true})
+				.AfterSetup(_ => ThemeHelper.ApplyTheme(true));
+		}
+
 
 		// Avalonia configuration, don't remove; also used by visual designer.
 		private static AppBuilder BuildAvaloniaApp()
