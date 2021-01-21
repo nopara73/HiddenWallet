@@ -99,7 +99,8 @@ namespace WalletWasabi.Fluent.ViewModels
 		{
 			SyntaxTree[] syntaxTrees = new[] { CSharpSyntaxTree.ParseText(source) };
 			CSharpCompilationOptions options = new(OutputKind.ConsoleApplication);
-			PortableExecutableReference[] references = new[] {
+			PortableExecutableReference[] references = new[]
+			{
 				MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location),
 				MetadataReference.CreateFromFile(typeof(ReactiveUI.ReactiveObject).GetTypeInfo().Assembly.Location),
 			};
