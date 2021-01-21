@@ -99,15 +99,12 @@ namespace WalletWasabi.Fluent.ViewModels
 		{
 			return CSharpCompilation.Create(
 				  "compilation",
-				  syntaxTrees: new[]
-				  {
-					CSharpSyntaxTree.ParseText(source)
-				  },
-				  references: new[]
-				  {
-					MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location),
-					MetadataReference.CreateFromFile(typeof(ReactiveUI.ReactiveObject).GetTypeInfo().Assembly.Location),
-				  },
+				  syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source) },
+				  references:
+					new[] {
+						MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location),
+						MetadataReference.CreateFromFile(typeof(ReactiveUI.ReactiveObject).GetTypeInfo().Assembly.Location),
+					},
 				  new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 		}
 	}
