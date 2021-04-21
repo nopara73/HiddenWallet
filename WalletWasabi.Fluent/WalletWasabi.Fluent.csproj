@@ -16,7 +16,7 @@
 		<AvaloniaResource Include="Assets\**" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.999-cibuild0012946-beta" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.999-cibuild0013372-beta" />
 		<PackageReference Include="Avalonia.Diagnostics" Version="0.10.999-cibuild0012946-beta" />
 		<PackageReference Include="Avalonia.Xaml.Behaviors" Version="0.10.0" />
 		<PackageReference Include="Avalonia.Xaml.Interactions.Custom" Version="0.10.0" />
