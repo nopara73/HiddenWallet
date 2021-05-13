@@ -38,11 +38,11 @@
                       Icon="{StaticResource calculator_regular}"
                       Command="{Binding ConnectHardwareWalletCommand}"
                       IsEnabled="{Binding OptionsEnabled}" />
-        <c:TileButton Text="Import a wallet"
+        <c:TileButton Text="Import a wallet file"
                       Icon="{StaticResource import_regular}"
                       Command="{Binding ImportWalletCommand}"
                       IsEnabled="{Binding OptionsEnabled}" />
-        <c:TileButton Text="Recover a wallet"
+        <c:TileButton Text="Type in recovery words"
                       Icon="{StaticResource recover_arrow_right_regular}"
                       Command="{Binding RecoverWalletCommand}"
                       IsEnabled="{Binding OptionsEnabled}" />
