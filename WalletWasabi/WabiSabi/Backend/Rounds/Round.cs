@@ -140,17 +140,16 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			=> Assert<SigningState>().AddWitness(index, witness);
 
 		private uint256 CalculateHash()
-			=> StrobeHasher.Create(ProtocolConstants.RoundStrobeDomain)
-				.Append(ProtocolConstants.RoundInputRegistrationTimeoutLabel, InputRegistrationTimeout)
-				.Append(ProtocolConstants.RoundConnectionConfirmationTimeoutLabel, ConnectionConfirmationTimeout)
-				.Append(ProtocolConstants.RoundOutputRegistrationTimeoutLabel, OutputRegistrationTimeout)
-				.Append(ProtocolConstants.RoundTransactionSigningTimeoutLabel, TransactionSigningTimeout)
-				.Append(ProtocolConstants.RoundMaxRegistrableAmountStrobeLabel, MaxRegistrableAmount)
-				.Append(ProtocolConstants.RoundMaxRegistrableVsizeStrobeLabel, MaxRegistrableVsize)
-				.Append(ProtocolConstants.RoundMaxVsizePerAliceStrobeLabel, MaxVsizeAllocationPerAlice)
-				.Append(ProtocolConstants.RoundAmountCredentialIssuerParametersStrobeLabel, AmountCredentialIssuerParameters)
-				.Append(ProtocolConstants.RoundVsizeCredentialIssuerParametersStrobeLabel, VsizeCredentialIssuerParameters)
-				.Append(ProtocolConstants.RoundFeeRateStrobeLabel, FeeRate.FeePerK)
-				.GetHash();
+			=> RoundHasher.CalculateHash(
+				InputRegistrationTimeout,
+				ConnectionConfirmationTimeout,
+				OutputRegistrationTimeout,
+				TransactionSigningTimeout,
+				MaxRegistrableAmount,
+				MaxRegistrableVsize,
+				MaxVsizeAllocationPerAlice,
+				AmountCredentialIssuerParameters,
+				VsizeCredentialIssuerParameters,
+				FeeRate.FeePerK);
 	}
 }
