@@ -19,6 +19,11 @@ namespace WalletWasabi.WabiSabi
 		public const string RoundVsizeCredentialIssuerParametersStrobeLabel = "vsize-credential-issuer-parameters";
 		public const string RoundFeeRateStrobeLabel = "fee-rate";
 
+		public const string RoundInputRegistrationTimeoutLabel= "input-registration-timeout";
+		public const string RoundConnectionConfirmationTimeoutLabel= "connection-confirmation-timeout";
+		public const string RoundOutputRegistrationTimeoutLabel= "output-registration-timeout";
+		public const string RoundTransactionSigningTimeoutLabel= "transaction-signing-timeout";
+
 		// Alice hashing labels
 		public const string AliceStrobeDomain = "alice-parameters";
 		public const string AliceCoinTxOutStrobeLabel = "coin-txout";
