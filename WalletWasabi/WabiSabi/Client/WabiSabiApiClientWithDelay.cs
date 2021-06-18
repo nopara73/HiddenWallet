@@ -10,11 +10,8 @@ namespace WalletWasabi.WabiSabi.Client
 {
 	public class WabiSabiApiClientWithDelay : IWabiSabiApiRequestHandler
 	{
-		private static Random Random { get; } = new();
-		private ConcurrentStack<DateTimeOffset> InputRegistrationSchedule { get; }
-		private ConcurrentStack<DateTimeOffset> SignatureRequestsSchedule { get; }
-
-		public WabiSabiApiClientWithDelay(IWabiSabiApiRequestHandler innerClient,
+		public WabiSabiApiClientWithDelay(
+			IWabiSabiApiRequestHandler innerClient,
 			int expectedNumberOfInputs,
 			TimeSpan inputRegistrationTimeFrame,
 			TimeSpan transactionSigningTimeFrame)
@@ -25,6 +22,10 @@ namespace WalletWasabi.WabiSabi.Client
 		}
 
 		public IWabiSabiApiRequestHandler InnerClient { get; }
+
+		private static Random Random { get; } = new();
+		private ConcurrentStack<DateTimeOffset> InputRegistrationSchedule { get; }
+		private ConcurrentStack<DateTimeOffset> SignatureRequestsSchedule { get; }
 
 		public async Task<InputRegistrationResponse> RegisterInputAsync(InputRegistrationRequest request, CancellationToken cancellationToken)
 		{
