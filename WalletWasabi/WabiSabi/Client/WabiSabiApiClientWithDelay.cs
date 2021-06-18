@@ -78,14 +78,9 @@ namespace WalletWasabi.WabiSabi.Client
 			throw new InvalidOperationException("All scheduled requests have already been made.");
 		}
 
-		private ConcurrentStack<DateTimeOffset> CreateSchedule(DateTimeOffset startTime, TimeSpan timeFrame, int expectedNumberOfInputs)
-		{
-			var timeFrameSamples = Enumerable
+		private ConcurrentStack<DateTimeOffset> CreateSchedule(DateTimeOffset startTime, TimeSpan timeFrame, int expectedNumberOfInputs) =>
+			 new (Enumerable
 				.Range(0, expectedNumberOfInputs)
-				.Select(_ => startTime.Add(Random.NextDouble() * timeFrame))
-				.ToList();
-			timeFrameSamples.Shuffle();
-			return new ConcurrentStack<DateTimeOffset>(timeFrameSamples);
-		}
+				.Select(_ => startTime.Add(Random.NextDouble() * timeFrame)));
 	}
 }
