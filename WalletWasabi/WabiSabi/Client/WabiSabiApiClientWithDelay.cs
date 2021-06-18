@@ -32,9 +32,10 @@ namespace WalletWasabi.WabiSabi.Client
 
 		public async Task<InputRegistrationResponse> RegisterInputAsync(InputRegistrationRequest request, CancellationToken cancellationToken)
 		{
+			var inputRegistrationTimeout = await InputRegistrationPhaseReady.ConfigureAwait(false);
 			InputRegistrationSchedule ??= CreateSchedule(
 				DateTimeOffset.Now,
-				await InputRegistrationPhaseReady.ConfigureAwait(false),
+				inputRegistrationTimeout,
 				ExpectedNumberOfInputs);
 
 			await DelayAccordingToScheduleAsync(InputRegistrationSchedule, cancellationToken).ConfigureAwait(false);
@@ -63,9 +64,10 @@ namespace WalletWasabi.WabiSabi.Client
 
 		public async Task SignTransactionAsync(TransactionSignaturesRequest request, CancellationToken cancellationToken)
 		{
+			var transactionSigningTimeout = await SigningPhaseReady.ConfigureAwait(false);
 			SignatureRequestsSchedule ??= CreateSchedule(
 				DateTimeOffset.Now,
-				await SigningPhaseReady.ConfigureAwait(false),
+				transactionSigningTimeout,
 				ExpectedNumberOfInputs);
 			await DelayAccordingToScheduleAsync(SignatureRequestsSchedule, cancellationToken).ConfigureAwait(false);
 			await InnerClient.SignTransactionAsync(request, cancellationToken).ConfigureAwait(false);
