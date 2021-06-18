@@ -76,5 +76,8 @@ namespace System.Threading.Tasks
 
 		public static async Task WithAwaitCancellationAsync(this Task me, TimeSpan timeout)
 			=> await me.WithAwaitCancellationAsync(ThreadingHelpers.Cancelled, (int)timeout.TotalMilliseconds).ConfigureAwait(false);
+
+		public static async Task<TResult> ThenAsync<T, TResult>(this Task<T> me, Func<T, TResult> extractor)
+			=> extractor(await me.ConfigureAwait(false));
 	}
 }

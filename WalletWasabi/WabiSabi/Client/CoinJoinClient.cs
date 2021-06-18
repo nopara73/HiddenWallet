@@ -38,14 +38,15 @@ namespace WalletWasabi.WabiSabi.Client
 		private IEnumerable<Coin> Coins { get; set; }
 		private SecureRandom SecureRandom { get; } = new SecureRandom();
 		private Random Random { get; } = new();
-		public IWabiSabiApiRequestHandler ArenaRequestHandler { get; }
+		public IWabiSabiApiRequestHandler ArenaRequestHandler { get; private set; }
+		public uint256 RoundId { get; }
 		public Kitchen Kitchen { get; }
 		public KeyManager Keymanager { get; }
 		private RoundStateUpdater RoundStatusUpdater { get; }
 
 		public async Task StartCoinJoinAsync(CancellationToken cancellationToken, IEnumerable<Money>? forcedOutputDenominations = null)
 		{
-			var roundState = await RoundStatusUpdater.CreateRoundAwaiter(roundState => roundState.Phase == Phase.InputRegistration, cancellationToken).ConfigureAwait(false);
+			var roundState = await RoundStatusUpdater.CreateRoundAwaiter(roundId, roundState => roundState.Phase == Phase.InputRegistration, cancellationToken).ConfigureAwait(false);
 			var constructionState = roundState.Assert<ConstructionState>();
 
 			// Calculate outputs values

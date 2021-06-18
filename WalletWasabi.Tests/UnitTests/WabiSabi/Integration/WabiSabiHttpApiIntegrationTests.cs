@@ -10,6 +10,7 @@ using WalletWasabi.Blockchain.Keys;
 using WalletWasabi.Tests.Helpers;
 using WalletWasabi.WabiSabi.Backend;
 using WalletWasabi.WabiSabi.Backend.Models;
+using WalletWasabi.WabiSabi.Backend.Rounds;
 using WalletWasabi.WabiSabi.Client;
 using WalletWasabi.WabiSabi.Models.MultipartyTransaction;
 using WalletWasabi.Wallets;
@@ -109,13 +110,24 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 
 			// Create the coinjoin client
 			var apiClient = _apiApplicationFactory.CreateWabiSabiHttpApiClient(httpClient);
+
 			using var roundStateUpdater = new RoundStateUpdater(TimeSpan.FromSeconds(1), apiClient);
 			await roundStateUpdater.StartAsync(CancellationToken.None);
+			var roundState = await roundStateUpdater.CreateRoundAwaiter(rs => rs.Phase == Phase.InputRegistration, cts.Token).ConfigureAwait(false);
+
+			// Create the API client that randomizes the remote API calls
+			// by applying uniform distributed delays scoped by a time window
+			// that begins with the signal of the phase and its duration is
+			// the same that the phase timeout period.
+			var apiClientWithDelays = new WabiSabiApiClientWithDelay(
+					apiClient,
+					InputCount,
+					roundStateUpdater.CreateRoundAwaiter(roundState.Id, rs => rs.Phase == Phase.InputRegistration, cts.Token).ThenAsync(x => x.InputRegistrationTimeout),
+					roundStateUpdater.CreateRoundAwaiter(roundState.Id, rs => rs.Phase == Phase.TransactionSigning, cts.Token).ThenAsync(x => x.TransactionSigningTimeout));
 
 			var kitchen = new Kitchen();
 			kitchen.Cook("");
-
-			var coinJoinClient = new CoinJoinClient(apiClient, coins, kitchen, keyManager, roundStateUpdater);
+			var coinJoinClient = new CoinJoinClient(apiClientWithDelays, coins, kitchen, keyManager, roundStateUpdater);
 
 			// Run the coinjoin client task.
 			await coinJoinClient.StartCoinJoinAsync(cts.Token, outputs?.Select(s => Money.Satoshis(s)));

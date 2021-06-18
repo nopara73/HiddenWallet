@@ -13,22 +13,30 @@ namespace WalletWasabi.WabiSabi.Client
 		public WabiSabiApiClientWithDelay(
 			IWabiSabiApiRequestHandler innerClient,
 			int expectedNumberOfInputs,
-			TimeSpan inputRegistrationTimeFrame,
-			TimeSpan transactionSigningTimeFrame)
+			Task<TimeSpan> inputRegistrationPhaseReady,
+			Task<TimeSpan> signingPhaseReady)
 		{
 			InnerClient = innerClient;
-			InputRegistrationSchedule = CreateSchedule(DateTimeOffset.Now, inputRegistrationTimeFrame, expectedNumberOfInputs);
-			SignatureRequestsSchedule = CreateSchedule(DateTimeOffset.Now, transactionSigningTimeFrame, expectedNumberOfInputs);
+			ExpectedNumberOfInputs = expectedNumberOfInputs;
+			InputRegistrationPhaseReady = inputRegistrationPhaseReady;
+			SigningPhaseReady = signingPhaseReady;
 		}
 
 		public IWabiSabiApiRequestHandler InnerClient { get; }
-
+		public int ExpectedNumberOfInputs { get; }
+		public Task<TimeSpan> InputRegistrationPhaseReady { get; }
+		public Task<TimeSpan> SigningPhaseReady { get; }
 		private static Random Random { get; } = new();
-		private ConcurrentStack<DateTimeOffset> InputRegistrationSchedule { get; }
-		private ConcurrentStack<DateTimeOffset> SignatureRequestsSchedule { get; }
+		private ConcurrentStack<DateTimeOffset>? InputRegistrationSchedule { get; set; }
+		private ConcurrentStack<DateTimeOffset>? SignatureRequestsSchedule { get; set; }
 
 		public async Task<InputRegistrationResponse> RegisterInputAsync(InputRegistrationRequest request, CancellationToken cancellationToken)
 		{
+			InputRegistrationSchedule ??= CreateSchedule(
+				DateTimeOffset.Now,
+				await InputRegistrationPhaseReady.ConfigureAwait(false),
+				ExpectedNumberOfInputs);
+
 			await DelayAccordingToScheduleAsync(InputRegistrationSchedule, cancellationToken).ConfigureAwait(false);
 			return await InnerClient.RegisterInputAsync(request, cancellationToken).ConfigureAwait(false);
 		}
@@ -55,6 +63,10 @@ namespace WalletWasabi.WabiSabi.Client
 
 		public async Task SignTransactionAsync(TransactionSignaturesRequest request, CancellationToken cancellationToken)
 		{
+			SignatureRequestsSchedule ??= CreateSchedule(
+				DateTimeOffset.Now,
+				await SigningPhaseReady.ConfigureAwait(false),
+				ExpectedNumberOfInputs);
 			await DelayAccordingToScheduleAsync(SignatureRequestsSchedule, cancellationToken).ConfigureAwait(false);
 			await InnerClient.SignTransactionAsync(request, cancellationToken).ConfigureAwait(false);
 		}
@@ -79,8 +91,8 @@ namespace WalletWasabi.WabiSabi.Client
 		}
 
 		private ConcurrentStack<DateTimeOffset> CreateSchedule(DateTimeOffset startTime, TimeSpan timeFrame, int expectedNumberOfInputs) =>
-			 new (Enumerable
+			 new(Enumerable
 				.Range(0, expectedNumberOfInputs)
-				.Select(_ => startTime.Add(Random.NextDouble() * timeFrame)));
+				.Select(_ => startTime.Add(0.8 * Random.NextDouble() * timeFrame)));
 	}
 }
