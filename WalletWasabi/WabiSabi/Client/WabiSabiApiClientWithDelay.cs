@@ -95,6 +95,7 @@ namespace WalletWasabi.WabiSabi.Client
 		private ConcurrentStack<DateTimeOffset> CreateSchedule(DateTimeOffset startTime, TimeSpan timeFrame, int expectedNumberOfInputs) =>
 			 new(Enumerable
 				.Range(0, expectedNumberOfInputs)
-				.Select(_ => startTime.Add(0.8 * Random.NextDouble() * timeFrame)));
+				.Select(_ => startTime.Add(0.8 * Random.NextDouble() * timeFrame)))
+				.OrderByAscending(t => t);
 	}
 }
