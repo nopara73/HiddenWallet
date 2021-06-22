@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using WalletWasabi.WabiSabi;
 using WalletWasabi.WabiSabi.Client.CredentialDependencies;
@@ -26,99 +26,45 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Client
 		// executed with no deadlocks.
 		private async Task SimulateAsyncRequestsAsync(DependencyGraph g)
 		{
-			// Keep track of the partial sets credentials to present. Requests
-			// that are keys in this dictionary are still waiting to be sent.
-			var pendingCredentialsToPresent = g.Vertices.ToDictionary(v => v, _ => DependencyGraph.CredentialTypes.ToDictionary(t => t, _ => new List<ulong>()));
+			IEnumerable<CredentialDependency> allEdges = g.EdgeSets.Values.SelectMany(edgeSet => edgeSet.Predecessors.Values.SelectMany(edges => edges));
 
-			// A waiting request is blocked if either set of credentials that
-			// need to be presented is incomplete. Since input registrations and
-			// connection confirmation are modeled as a single node with in
-			// degree 0, they are never blocked.
-			ImmutableArray<RequestNode> UnblockedRequests() => pendingCredentialsToPresent.Keys.Where(node => DependencyGraph.CredentialTypes.All(t => g.InDegree(node, t) == pendingCredentialsToPresent[node][t].Count)).ToImmutableArray();
+			// Create a task completion source for each credential that needs to be issued.
+			var taskCompletionSources = allEdges.ToImmutableDictionary(e => e, _ => new TaskCompletionSource<ulong>());
 
-			// Also keep track of the in-flight requests
-			var inFlightRequests = new List<(Task<ImmutableSortedDictionary<CredentialType, IEnumerable<ulong>>> Task, ImmutableSortedDictionary<CredentialType, IEnumerable<CredentialDependency>> Dependencies)>();
-
-			// And all sent requests, for testing purposes.
-			var sent = new HashSet<RequestNode>();
+			// Track all "sent" requests for testing purposes
+			var sent = new ConcurrentDictionary<RequestNode, bool>();
 
 			var rng = new Random();
 
 			// Simulate sending a request. Instead of actual Credential objects,
 			// credentials are just represented as ulongs.
-			async Task<ImmutableSortedDictionary<CredentialType, IEnumerable<ulong>>> SimulateRequest(
-				RequestNode node,
-				ImmutableSortedDictionary<CredentialType, IEnumerable<ulong>> presented,
-				ImmutableSortedDictionary<CredentialType, IEnumerable<ulong>> requested)
+			async Task SimulateRequest(RequestNode node)
 			{
-				foreach (var credentialType in presented.Keys)
-				{
-					Assert.Equal(g.InEdges(node, credentialType).Select(e => e.Value).OrderBy(x => x), presented[credentialType].OrderBy(x => x));
-					Assert.Equal(g.OutEdges(node, credentialType).Select(e => e.Value).OrderBy(x => x), requested[credentialType].OrderBy(x => x));
-				}
+				var inEdges = Enumerable.Concat(g.InEdges(node, CredentialType.Amount), g.InEdges(node, CredentialType.Vsize));
 
-				Assert.DoesNotContain(node, sent);
-				sent.Add(node);
+				var credentialTasks = inEdges.Select(edge =>taskCompletionSources[edge].Task);
+				await Task.WhenAll(credentialTasks);
+
+				var credentialsToPresent = credentialTasks.Select(t => t.Result);
+				Assert.Equal<ulong>(inEdges.Select(e => e.Value).OrderBy(x => x), credentialsToPresent.OrderBy(x => x));
+
+				Assert.False(sent.ContainsKey(node));
+				sent[node] = true;
 
 				await Task.Delay(1 + rng.Next(10));
 
-				return requested;
-			}
-
-			var ct = new CancellationTokenSource(new TimeSpan(0, 2, 0));
-
-			for (var remainingSteps = 2 * pendingCredentialsToPresent.Count; remainingSteps > 0 && pendingCredentialsToPresent.Count + inFlightRequests.Count > 0; remainingSteps--)
-			{
-				// Clear unblocked but waiting requests. Not very efficient
-				// (quadratic complexity), but good enough for demonstration
-				// purposes.
-				foreach (var node in UnblockedRequests())
+				foreach (var edge in Enumerable.Concat(g.OutEdges(node, CredentialType.Amount), g.OutEdges(node, CredentialType.Vsize)))
 				{
-					// FIXME this is a little ugly, how should it look in the real code? seems like we're missing an abstraction
-					var edgesByType = DependencyGraph.CredentialTypes.ToImmutableSortedDictionary(t => t, t => g.OutEdges(node, t));
-					var credentialsToRequest = edgesByType.ToImmutableSortedDictionary(kvp => kvp.Key, kvp => kvp.Value.Select(e => e.Value));
-					var credentialsToPresent = pendingCredentialsToPresent[node].ToImmutableSortedDictionary(kvp => kvp.Key, kvp => kvp.Value.AsEnumerable());
-
-					Assert.NotEmpty(edgesByType);
-
-					var task = SimulateRequest(node, credentialsToPresent, credentialsToRequest);
-
-					inFlightRequests.Add((Task: task, Dependencies: edgesByType));
-					Assert.True(pendingCredentialsToPresent.Remove(node));
-				}
-
-				// At this point at least one task must be in progress.
-				Assert.True(inFlightRequests.Count > 0);
-
-				// Wait for a response to arrive
-				var i = Task.WaitAny(inFlightRequests.Select(x => x.Task).ToArray(), ct.Token);
-				Assert.InRange(i, 0, inFlightRequests.Count);
-				var entry = inFlightRequests[i];
-				inFlightRequests.RemoveAt(i);
-
-				var issuedCredentials = await entry.Task;
-
-				// Unblock the requests that depend on the issued credentials from this response
-				foreach ((var credentialType, var edges) in entry.Dependencies)
-				{
-					Assert.Equal(edges.Count(), issuedCredentials[credentialType].Count());
-					foreach ((var credential, var edge) in issuedCredentials[credentialType].Zip(edges))
-					{
-						// Ignore the fact that credential is the same as
-						// edge.Value, it's meant to represent the real thing
-						// since it's returned from the task.
-						Assert.Equal(edge.Value, credential);
-						pendingCredentialsToPresent[edge.To][credentialType].Add(credential);
-					}
+					taskCompletionSources[edge].SetResult(edge.Value);
 				}
 			}
 
-			Assert.Empty(inFlightRequests);
-			Assert.Empty(pendingCredentialsToPresent);
+			var tasks = g.Vertices.Select(SimulateRequest).ToArray();
 
-			Assert.True(g.Vertices.All(v => sent.Contains(v)));
+			Task.WaitAll(tasks, TimeSpan.FromMinutes(2));
 
-			ct.Dispose();
+			Assert.Empty(tasks.Where(t => t.Status != TaskStatus.RanToCompletion));
+			Assert.True(g.Vertices.All(v => sent.ContainsKey(v)));
 		}
 
 		[Fact]
@@ -285,7 +231,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Client
 			foreach (var credentialType in DependencyGraph.CredentialTypes)
 			{
 				// Input nodes
-				foreach (var node in graph.Vertices.Take(inputValues.Count()))
+				foreach (var node in graph.Inputs)
 				{
 					var balance = graph.Balance(node, credentialType);
 
@@ -302,7 +248,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Client
 				}
 
 				// Output nodes
-				foreach (var node in graph.Vertices.Skip(inputValues.Count()).Take(outputValues.Count()))
+				foreach (var node in graph.Outputs)
 				{
 					var balance = graph.Balance(node, credentialType);
 
@@ -317,7 +263,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Client
 				}
 
 				// Reissuance nodes
-				foreach (var node in graph.Vertices.Skip(inputValues.Count() + outputValues.Count()))
+				foreach (var node in graph.Reissuances)
 				{
 					var balance = graph.Balance(node, credentialType);
 
