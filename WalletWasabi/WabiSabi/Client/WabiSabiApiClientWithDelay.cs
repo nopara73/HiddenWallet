@@ -10,29 +10,41 @@ namespace WalletWasabi.WabiSabi.Client
 {
 	public class WabiSabiApiClientWithDelay : IWabiSabiApiRequestHandler
 	{
+		private int readToSignRequestCount;
+		private int outputRegisteredCount;
+		private DateTimeOffset firstOutputRegistrationTime;
+		private TaskCompletionSource allOutputsRegistered = new ();
+
 		public WabiSabiApiClientWithDelay(
 			IWabiSabiApiRequestHandler innerClient,
 			int expectedNumberOfInputs,
-			Task<TimeSpan> inputRegistrationPhaseReady,
-			Task<TimeSpan> signingPhaseReady)
+			int expectedNumberOfOutputs,
+			Task<TimeSpan> inputRegistrationPhaseTimeout,
+			Task<TimeSpan> outputRegistrationPhaseTimeout,
+			Task<TimeSpan> signingPhaseTimeout)
 		{
 			InnerClient = innerClient;
 			ExpectedNumberOfInputs = expectedNumberOfInputs;
-			InputRegistrationPhaseReady = inputRegistrationPhaseReady;
-			SigningPhaseReady = signingPhaseReady;
+			ExpectedNumberOfOutputs = expectedNumberOfOutputs;
+			InputRegistrationPhaseTimeout = inputRegistrationPhaseTimeout;
+			OutputRegistrationPhaseTimeout = outputRegistrationPhaseTimeout;
+			SigningPhaseTimeout = signingPhaseTimeout;
 		}
 
 		public IWabiSabiApiRequestHandler InnerClient { get; }
 		public int ExpectedNumberOfInputs { get; }
-		public Task<TimeSpan> InputRegistrationPhaseReady { get; }
-		public Task<TimeSpan> SigningPhaseReady { get; }
+		public int ExpectedNumberOfOutputs { get; }
+		public Task<TimeSpan> InputRegistrationPhaseTimeout { get; }
+		public Task<TimeSpan> OutputRegistrationPhaseTimeout { get; }
+		public Task<TimeSpan> SigningPhaseTimeout { get; }
 		private static Random Random { get; } = new();
 		private ConcurrentStack<DateTimeOffset>? InputRegistrationSchedule { get; set; }
 		private ConcurrentStack<DateTimeOffset>? SignatureRequestsSchedule { get; set; }
+		private ConcurrentStack<DateTimeOffset>? ReadyToSignRequestsSchedule { get; set; }
 
 		public async Task<InputRegistrationResponse> RegisterInputAsync(InputRegistrationRequest request, CancellationToken cancellationToken)
 		{
-			var inputRegistrationTimeout = await InputRegistrationPhaseReady.ConfigureAwait(false);
+			var inputRegistrationTimeout = await InputRegistrationPhaseTimeout.ConfigureAwait(false);
 			InputRegistrationSchedule ??= CreateSchedule(
 				DateTimeOffset.Now,
 				inputRegistrationTimeout,
@@ -54,7 +66,14 @@ namespace WalletWasabi.WabiSabi.Client
 
 		public async Task<OutputRegistrationResponse> RegisterOutputAsync(OutputRegistrationRequest request, CancellationToken cancellationToken)
 		{
-			return await InnerClient.RegisterOutputAsync(request, cancellationToken);
+			var outputRegistrationResponse = await InnerClient.RegisterOutputAsync(request, cancellationToken);
+			firstOutputRegistrationTime = firstOutputRegistrationTime == default ? DateTimeOffset.Now : firstOutputRegistrationTime;
+			if (Interlocked.Increment(ref outputRegisteredCount) == ExpectedNumberOfOutputs)
+			{
+				allOutputsRegistered.SetResult();
+			}
+
+			return outputRegistrationResponse;
 		}
 
 		public async Task RemoveInputAsync(InputsRemovalRequest request, CancellationToken cancellationToken)
@@ -64,13 +83,36 @@ namespace WalletWasabi.WabiSabi.Client
 
 		public async Task SignTransactionAsync(TransactionSignaturesRequest request, CancellationToken cancellationToken)
 		{
-			var transactionSigningTimeout = await SigningPhaseReady.ConfigureAwait(false);
+			var transactionSigningTimeout = await SigningPhaseTimeout.ConfigureAwait(false);
 			SignatureRequestsSchedule ??= CreateSchedule(
 				DateTimeOffset.Now,
 				transactionSigningTimeout,
 				ExpectedNumberOfInputs);
 			await DelayAccordingToScheduleAsync(SignatureRequestsSchedule, cancellationToken).ConfigureAwait(false);
 			await InnerClient.SignTransactionAsync(request, cancellationToken).ConfigureAwait(false);
+		}
+
+		public async Task ReadyToSign(ReadyToSignRequestRequest request, CancellationToken cancellationToken)
+		{
+			var outputRegistrationTimeout = await OutputRegistrationPhaseTimeout.ConfigureAwait(false);
+			if (Interlocked.Increment(ref readToSignRequestCount) >= ExpectedNumberOfInputs)
+			{
+				await allOutputsRegistered.Task;
+			}
+			else
+			{
+				if (firstOutputRegistrationTime == default)
+				{
+					throw new Exception("No outputs registered yet.");
+				}
+
+				ReadyToSignRequestsSchedule ??= CreateSchedule(
+					firstOutputRegistrationTime,
+					outputRegistrationTimeout,
+					ExpectedNumberOfInputs - 1);
+				await DelayAccordingToScheduleAsync(ReadyToSignRequestsSchedule, cancellationToken).ConfigureAwait(false);
+	}
+			await InnerClient.ReadyToSign(request, cancellationToken).ConfigureAwait(false);
 		}
 
 		public async Task<RoundState[]> GetStatusAsync(CancellationToken cancellationToken)

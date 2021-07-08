@@ -26,7 +26,6 @@ namespace WalletWasabi.WabiSabi.Models
 
 		public static RoundState FromRound(Round round) =>
 			new(
-				round.Id,
 				round.AmountCredentialIssuerParameters,
 				round.VsizeCredentialIssuerParameters,
 				round.FeeRate,
@@ -52,5 +51,18 @@ namespace WalletWasabi.WabiSabi.Models
 
 		public WabiSabiClient CreateVsizeCredentialClient(WasabiRandom random) =>
 			new(VsizeCredentialIssuerParameters, random, MaxRegistrableVsize);
+
+		private uint256 CalculateHash()
+			=> RoundHasher.CalculateHash(
+				InputRegistrationTimeout,
+				ConnectionConfirmationTimeout,
+				OutputRegistrationTimeout,
+				TransactionSigningTimeout,
+				MaxRegistrableAmount,
+				MaxRegistrableVsize,
+				MaxVsizeAllocationPerAlice,
+				AmountCredentialIssuerParameters,
+				VsizeCredentialIssuerParameters,
+				FeeRate.FeePerK);
 	}
 }

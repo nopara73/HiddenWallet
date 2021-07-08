@@ -39,18 +39,29 @@ namespace WalletWasabi.WabiSabi.Client
 		private SecureRandom SecureRandom { get; } = new SecureRandom();
 		private Random Random { get; } = new();
 		public IWabiSabiApiRequestHandler ArenaRequestHandler { get; private set; }
-		public uint256 RoundId { get; }
 		public Kitchen Kitchen { get; }
 		public KeyManager Keymanager { get; }
 		private RoundStateUpdater RoundStatusUpdater { get; }
 
-		public async Task StartCoinJoinAsync(CancellationToken cancellationToken, IEnumerable<Money>? forcedOutputDenominations = null)
+		public async Task StartCoinJoinAsync(IEnumerable<Money> outputDenominations, CancellationToken cancellationToken)
 		{
-			var roundState = await RoundStatusUpdater.CreateRoundAwaiter(roundId, roundState => roundState.Phase == Phase.InputRegistration, cancellationToken).ConfigureAwait(false);
+			var roundState = await RoundStatusUpdater.CreateRoundAwaiter(roundState => roundState.Phase == Phase.InputRegistration, cancellationToken).ConfigureAwait(false);
 			var constructionState = roundState.Assert<ConstructionState>();
 
 			// Calculate outputs values
-			var outputValues = DecomposeAmounts(roundState.FeeRate, roundState.CoinjoinState.Parameters.AllowedOutputAmounts.Min, forcedOutputDenominations);
+			var outputValues = DecomposeAmounts(roundState.FeeRate, roundState.CoinjoinState.Parameters.AllowedOutputAmounts.Min, outputDenominations);
+
+			// Create the API client that randomizes the remote API calls
+			// by applying uniform distributed delays scoped by a time window
+			// that begins with the signal of the phase and its duration is
+			// the same that the phase timeout period.
+			ArenaRequestHandler = new WabiSabiApiClientWithDelay(
+				ArenaRequestHandler,
+				Coins.Count(),
+				outputValues.Count(),
+				Task.FromResult<TimeSpan>(roundState.InputRegistrationTimeout),
+				RoundStatusUpdater.CreateRoundAwaiter(roundState.Id, rs => rs.Phase == Phase.OutputRegistration, cancellationToken).ThenAsync(x => x.OutputRegistrationTimeout),
+				RoundStatusUpdater.CreateRoundAwaiter(roundState.Id, rs => rs.Phase == Phase.TransactionSigning, cancellationToken).ThenAsync(x => x.TransactionSigningTimeout));
 
 			// Get all locked internal keys we have and assert we have enough.
 			Keymanager.AssertLockedInternalKeysIndexed(howMany: outputValues.Count());
@@ -121,10 +132,9 @@ namespace WalletWasabi.WabiSabi.Client
 			await Task.WhenAll(registerRequests).ConfigureAwait(false);
 		}
 
-		private IEnumerable<Money> DecomposeAmounts(FeeRate feeRate, Money minimumOutputAmount, IEnumerable<Money>? forcedOutputDenominations = null)
+		private IEnumerable<Money> DecomposeAmounts(FeeRate feeRate, Money minimumOutputAmount, IEnumerable<Money> outputDenominations)
 		{
-			var allDenominations = forcedOutputDenominations is null ? StandardDenomination.Values : forcedOutputDenominations;
-			GreedyDecomposer greedyDecomposer = new(allDenominations.Where(x => x >= minimumOutputAmount));
+			GreedyDecomposer greedyDecomposer = new(outputDenominations.Where(x => x >= minimumOutputAmount));
 			var sum = Coins.Sum(c => c.EffectiveValue(feeRate));
 			return greedyDecomposer.Decompose(sum, feeRate.GetFee(31));
 		}

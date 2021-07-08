@@ -12,6 +12,7 @@ using WalletWasabi.WabiSabi.Backend;
 using WalletWasabi.WabiSabi.Backend.Models;
 using WalletWasabi.WabiSabi.Backend.Rounds;
 using WalletWasabi.WabiSabi.Client;
+using WalletWasabi.WabiSabi.Models.Decomposition;
 using WalletWasabi.WabiSabi.Models.MultipartyTransaction;
 using WalletWasabi.Wallets;
 using Xunit;
@@ -50,10 +51,10 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 
 		[Theory]
 		[InlineData(new long[] { 20_000_000, 40_000_000, 60_000_000, 80_000_000 })]
-		[InlineData(new long[] { 10_000_000, 20_000_000, 30_000_000, 40_000_000, 100_000_000 })]
-		[InlineData(new long[] { 10_000_000, 20_000_000, 30_000_000, 40_000_000, 100_000_000 }, new long[] { 100_000_000, 100_000_000 })]
-		[InlineData(new long[] { 120_000_000 }, new long[] { 20_000_000, 40_000_000, 60_000_000 })]
-		[InlineData(new long[] { 100_000_000, 10_000_000, 10_000 })]
+		//[InlineData(new long[] { 10_000_000, 20_000_000, 30_000_000, 40_000_000, 100_000_000 })]
+		//[InlineData(new long[] { 10_000_000, 20_000_000, 30_000_000, 40_000_000, 100_000_000 }, new long[] { 100_000_000, 100_000_000 })]
+		//[InlineData(new long[] { 120_000_000 }, new long[] { 20_000_000, 40_000_000, 60_000_000 })]
+		//[InlineData(new long[] { 100_000_000, 10_000_000, 10_000 })]
 		public async Task SoloCoinJoinTestAsync(long[] amounts, long[]? outputs = null)
 		{
 			int inputCount = amounts.Length;
@@ -104,7 +105,11 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 					// Instruct the coodinator DI container to use these two scoped
 					// services to build everything (wabisabi controller, arena, etc)
 					services.AddScoped<IRPCClient>(s => rpc);
-					services.AddScoped<WabiSabiConfig>(s => new WabiSabiConfig { MaxInputCountByRound = inputCount });
+					services.AddScoped<WabiSabiConfig>(s => new WabiSabiConfig
+					{
+						MaxInputCountByRound = inputCount,
+						StandardInputRegistrationTimeout = TimeSpan.FromSeconds(20)
+					});
 				});
 			}).CreateClient();
 
@@ -113,24 +118,14 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 
 			using var roundStateUpdater = new RoundStateUpdater(TimeSpan.FromSeconds(1), apiClient);
 			await roundStateUpdater.StartAsync(CancellationToken.None);
-			var roundState = await roundStateUpdater.CreateRoundAwaiter(rs => rs.Phase == Phase.InputRegistration, cts.Token).ConfigureAwait(false);
-
-			// Create the API client that randomizes the remote API calls
-			// by applying uniform distributed delays scoped by a time window
-			// that begins with the signal of the phase and its duration is
-			// the same that the phase timeout period.
-			var apiClientWithDelays = new WabiSabiApiClientWithDelay(
-					apiClient,
-					InputCount,
-					roundStateUpdater.CreateRoundAwaiter(roundState.Id, rs => rs.Phase == Phase.InputRegistration, cts.Token).ThenAsync(x => x.InputRegistrationTimeout),
-					roundStateUpdater.CreateRoundAwaiter(roundState.Id, rs => rs.Phase == Phase.TransactionSigning, cts.Token).ThenAsync(x => x.TransactionSigningTimeout));
 
 			var kitchen = new Kitchen();
 			kitchen.Cook("");
-			var coinJoinClient = new CoinJoinClient(apiClientWithDelays, coins, kitchen, keyManager, roundStateUpdater);
+			var coinJoinClient = new CoinJoinClient(apiClient, coins, kitchen, keyManager, roundStateUpdater);
 
 			// Run the coinjoin client task.
-			await coinJoinClient.StartCoinJoinAsync(cts.Token, outputs?.Select(s => Money.Satoshis(s)));
+			var denominations = outputs?.Select(s => Money.Satoshis(s));
+			await coinJoinClient.StartCoinJoinAsync(denominations ?? StandardDenomination.Values, cts.Token);
 
 			var boadcastedTx = await transactionCompleted.Task.ConfigureAwait(false); // wait for the transaction to be broadcasted.
 			Assert.NotNull(boadcastedTx);
