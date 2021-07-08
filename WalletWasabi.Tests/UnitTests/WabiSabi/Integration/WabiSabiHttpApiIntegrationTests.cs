@@ -63,7 +63,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 			var transactionCompleted = new TaskCompletionSource<Transaction>();
 
 			// Total test timeout.
-			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(180));
+			using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 			cts.Token.Register(() => transactionCompleted.TrySetCanceled(), useSynchronizationContext: false);
 
 			// Create a key manager and use it to create two fake coins.
