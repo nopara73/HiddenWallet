@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:WalletWasabi.Fluent.Controls"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="WalletWasabi.Fluent.Views.AddWallet.WelcomePageView">
+  <UserControl.Styles>
+    <Style Selector="Button.action /template/ ContentPresenter">
+      <Setter Property="Background" Value="#45C2BA" />
+    </Style>
+  </UserControl.Styles>
+  <controls:ContentArea
+    EnableCancel="False"
+    EnableBack="False"
+    EnableNext="False"
+    ScrollViewer.VerticalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="32">
+      <StackPanel>
+        <DockPanel>
+          <StackPanel Spacing="36" DockPanel.Dock="Left">
+            <Image Height="62" HorizontalAlignment="Left">
+              <Image.Source>
+                <DrawingImage Drawing="{StaticResource placeholder_wasabi_logo}" />
+              </Image.Source>
+            </Image>
+
+            <TextBlock FontWeight="600" HorizontalAlignment="Left" FontSize="28" Text="Welcome to Wasabi Wallet"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </DockPanel>
+
+        <StackPanel Spacing="22" TextBlock.FontSize="12" Margin="0 15 0 0">
+          <StackPanel.Styles>
+            <Style Selector="TextBlock">
+              <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+          </StackPanel.Styles>
+          <TextBlock TextWrapping="Wrap">
+            Being put in a position to trust someone is always uncomfortable. Especially regarding personal information or your money. This is why Wasabi Wallet is trustless by design.
+          </TextBlock>
+
+          <TextBlock>
+            We do not, have not and we never will collect information from you. We live in a world where your information is being used to typecast, manipulate and surveil you. What you do with your Bitcoin is your business.
+          </TextBlock>
+
+          <TextBlock>
+            Use Wasabi Wallet to retain your individuality, regain your identity and ultimately, reclaim your privacy. We let you control what you reveal about your Bitcoin life.
+          </TextBlock>
+        </StackPanel>
+      </StackPanel>
+
+      <StackPanel Spacing="30" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0 32 0 0">
+        <StackPanel.Styles>
+          <Style Selector="PathIcon">
+            <Setter Property="Foreground" Value="#45C2BA" />
+            <Setter Property="Height" Value="18" />
+          </Style>
+          <Style Selector="StackPanel">
+            <Setter Property="VerticalAlignment" Value="Top" />
+          </Style>
+
+          <Style Selector="Border.benefit">
+            <Setter Property="Width" Value="200" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Background" Value="#1FFFFFFF" />
+            <Setter Property="TextBlock.FontSize" Value="12" />
+          </Style>
+
+          <Style Selector="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+          </Style>
+        </StackPanel.Styles>
+
+        <StackPanel Orientation="Horizontal" Spacing="20">
+          <Border Classes="benefit">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{StaticResource shield_regular}" />
+              <TextBlock Text="Trustless" />
+            </StackPanel>
+          </Border>
+
+
+          <Border Classes="benefit">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{StaticResource private_regular}" />
+              <TextBlock Text="Private" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="20">
+          <Border Classes="benefit">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{StaticResource fingerprint_regular}" />
+              <TextBlock Text="Anonymous" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="benefit">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{StaticResource heart_regular}" />
+              <TextBlock Text="Free and Open Source" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </StackPanel>
+
+      <Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Classes="action" Content="Get Started"
+              DockPanel.Dock="Bottom" Margin="0 40 0 0"
+              Command="{Binding GetStartedCommand}" />
+    </StackPanel>
+  </controls:ContentArea>
+</UserControl>
