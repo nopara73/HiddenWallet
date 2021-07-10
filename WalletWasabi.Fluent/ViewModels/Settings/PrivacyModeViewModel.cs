@@ -2,6 +2,7 @@ using System;
 using System.Reactive.Linq;
 using ReactiveUI;
 using WalletWasabi.Fluent.ViewModels.NavBar;
+using WalletWasabi.Microservices;
 
 namespace WalletWasabi.Fluent.ViewModels.Settings
 {
@@ -9,6 +10,8 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 	public partial class PrivacyModeViewModel : NavBarItemViewModel
 	{
 		[AutoNotify] private bool _privacyMode;
+
+		private ProcessAsync? Process { get; set; }
 
 		public PrivacyModeViewModel()
 		{
@@ -27,6 +30,20 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 					ToggleTitle();
 					this.RaisePropertyChanged(nameof(IconName));
 					Services.UiConfig.PrivacyMode = x;
+
+					if (x)
+					{
+						string processPath = MicroserviceHelpers.GetBinaryPath("ShutdownBlocker");
+						Process = new ProcessAsync(ProcessStartInfoFactory.Make(processPath, ""));
+						Process.Start();
+					}
+					else
+					{
+						if (Process is { } proc)
+						{
+							proc.Kill();
+						}
+					}
 				});
 		}
 

@@ -63,6 +63,9 @@
 		<None Update="Microservices\Binaries\win64\hwi.exe">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Microservices\Binaries\win64\ShutdownBlocker.exe">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Tor\Geoip\geoip">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
