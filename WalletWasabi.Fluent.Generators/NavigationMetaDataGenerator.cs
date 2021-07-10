@@ -83,13 +83,16 @@ namespace WalletWasabi.Fluent
 		public void Initialize(GeneratorInitializationContext context)
 		{
 			// System.Diagnostics.Debugger.Launch();
+			context.RegisterForPostInitialization((i) =>
+			{
+				i.AddSource("NavigationMetaDataAttribute.cs", SourceText.From(AttributeText, Encoding.UTF8));
+			});
+
 			context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
 		}
 
 		public void Execute(GeneratorExecutionContext context)
 		{
-			context.AddSource("NavigationMetaDataAttribute.cs", SourceText.From(AttributeText, Encoding.UTF8));
-
 			if (context.SyntaxReceiver is not SyntaxReceiver receiver)
 			{
 				return;

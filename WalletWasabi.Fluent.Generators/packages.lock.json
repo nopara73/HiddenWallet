@@ -4,17 +4,17 @@
     ".NETStandard,Version=v2.0": {
       "Microsoft.CodeAnalysis.Analyzers": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "xJBuqrO6P6a9O9BOtzGzQo4E8ZTNY4iygpzO5AAQzo9sKA/siX4+jvW1UFVlXpRdh3mirY/PMYu57vjGSw2ezg=="
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "7xt6zTlIEizUgEsYAIgm37EbdkiMmr6fP6J9pDoKEpiGM4pi32BCPGr/IczmSJI9Zzp0a6HOzpr9OvpMP+2veA=="
       },
       "Microsoft.CodeAnalysis.CSharp": {
         "type": "Direct",
-        "requested": "[3.8.0, )",
-        "resolved": "3.8.0",
-        "contentHash": "hKqFCUSk9TIMBDjiYMF8/ZfK9p9mzpU+slM73CaCHu4ctfkoqJGHLQhyT8wvrYsIg+ufrUWBF8hcJYmyr5rc5Q==",
+        "requested": "[3.9.0, )",
+        "resolved": "3.9.0",
+        "contentHash": "NTsiK3fnoZGemy4dBHrILwg9rL+jDnOJ7aixFu4EOWM1r6MZMrNCIhT2tO4AmIMdfICLPwj910uZRRLpbMnqHg==",
         "dependencies": {
-          "Microsoft.CodeAnalysis.Common": "[3.8.0]"
+          "Microsoft.CodeAnalysis.Common": "[3.9.0]"
         }
       },
       "NETStandard.Library": {
@@ -28,14 +28,14 @@
       },
       "Microsoft.CodeAnalysis.Common": {
         "type": "Transitive",
-        "resolved": "3.8.0",
-        "contentHash": "8YTZ7GpsbTdC08DITx7/kwV0k4SC6cbBAFqc13cOm5vKJZcEIAh51tNSyGSkWisMgYCr96B2wb5Zri1bsla3+g==",
+        "resolved": "3.9.0",
+        "contentHash": "HiWjF7PNIEngmFg2Xk8cZ/83lRIRkk9v+5ibbY5B7VvjNGdClGAMuWtZER9F5rGRR41VbJLco9ah73jFTh4vPw==",
         "dependencies": {
           "Microsoft.CodeAnalysis.Analyzers": "3.0.0",
           "System.Collections.Immutable": "5.0.0",
           "System.Memory": "4.5.4",
           "System.Reflection.Metadata": "5.0.0",
-          "System.Runtime.CompilerServices.Unsafe": "4.7.1",
+          "System.Runtime.CompilerServices.Unsafe": "5.0.0",
           "System.Text.Encoding.CodePages": "4.5.1",
           "System.Threading.Tasks.Extensions": "4.5.4"
         }
@@ -83,8 +83,8 @@
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Transitive",
-        "resolved": "4.7.1",
-        "contentHash": "zOHkQmzPCn5zm/BH+cxC1XbUS3P4Yoi3xzW7eRgVpDR2tPGSzyMZ17Ig1iRkfJuY0nhxkQQde8pgePNiA7z7TQ=="
+        "resolved": "5.0.0",
+        "contentHash": "ZD9TMpsmYJLrxbbmdvhwt9YEgG5WntEnZ/d1eH8JBX9LBp+Ju8BSBhUGbZMNVHHomWo2KVImJhTDl2hIgw/6MA=="
       },
       "System.Text.Encoding.CodePages": {
         "type": "Transitive",
