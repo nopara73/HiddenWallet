@@ -306,7 +306,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 			var coin = await OutpointToCoinAsync(request).ConfigureAwait(false);
 
-			var alice = new Alice(coin, request.OwnershipProof);
+			var alice = new Alice(coin, request.OwnershipProof, round);
 
 			// Begin with Alice locked, to serialize requests concerning a
 			// single coin.
@@ -424,7 +424,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.RoundNotFound, $"Round ({request.RoundId}) not found.");
 			}
 
-			if (AlicesById[request.AliceId] is not Alice alice || !round.Alices.Contains(alice))
+			if (AlicesById[request.AliceId] is not Alice alice || alice.Round != round)
 			{
 				throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.AliceNotFound, $"Round ({request.RoundId}): Alice ({request.AliceId}) not found.");
 			}
@@ -451,7 +451,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.RoundNotFound, $"Round ({request.RoundId}) not found.");
 			}
 
-			if (AlicesById[request.AliceId] is not Alice alice || !round.Alices.Contains(alice))
+			if (AlicesById[request.AliceId] is not Alice alice || alice.Round != round)
 			{
 				throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.AliceNotFound, $"Round ({request.RoundId}): Alice ({request.AliceId}) not found.");
 			}
@@ -483,7 +483,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.RoundNotFound, $"Round ({request.RoundId}) not found.");
 			}
 
-			if (AlicesById[request.AliceId] is not Alice alice || !round.Alices.Contains(alice))
+			if (AlicesById[request.AliceId] is not Alice alice || alice.Round != round)
 			{
 				throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.AliceNotFound, $"Round ({request.RoundId}): Alice ({request.AliceId}) not found.");
 			}
