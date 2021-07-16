@@ -69,84 +69,142 @@
                                           Height="{Binding HeightSource, Mode=TwoWay}"
                                           x:CompileBindings="False"/>
       </i:Interaction.Behaviors>
-      <ScrollViewer Name="ScrollViewer"
-                    Classes.smallLayout="{Binding IsSmallLayout}"
-                    Classes.normalLayout="{Binding IsNormalLayout}"
-                    Classes.wideLayout="{Binding IsWideLayout}">
-        <ScrollViewer.Styles>
-          <Style Selector="ScrollViewer.smallLayout">
+      <Panel Classes.smallLayout="{Binding IsSmallLayout}"
+             Classes.normalLayout="{Binding IsNormalLayout}"
+             Classes.wideLayout="{Binding IsWideLayout}"
+             Classes.isEmptyWallet="{Binding History.IsWalletEmpty}">
+        <Panel.Styles>
+          <Style Selector="Panel.smallLayout">
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="Margin" Value="0,0,0,11"/>
             <Setter Property="(DockPanel.Dock)" Value="Top"/>
           </Style>
-          <Style Selector="ScrollViewer.normalLayout">
+          <Style Selector="Panel.normalLayout">
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="Margin" Value="0,0,0,11"/>
             <Setter Property="(DockPanel.Dock)" Value="Top"/>
           </Style>
-          <Style Selector="ScrollViewer.wideLayout">
+          <Style Selector="Panel.wideLayout">
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="Margin" Value="0,0,11,0"/>
             <Setter Property="(DockPanel.Dock)" Value="Left"/>
           </Style>
-        </ScrollViewer.Styles>
-        <i:Interaction.Behaviors>
-          <behaviors:HorizontalScrollViewerBehavior RequireShiftKey="False" ScrollChangeSize="Page"/>
-        </i:Interaction.Behaviors>
-        <ItemsControl Items="{Binding Tiles}"
+          <Style Selector="Panel.isEmptyWallet">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+          </Style>
+        </Panel.Styles>
+        <ScrollViewer Name="ScrollViewer"
+                      IsVisible="{Binding !History.IsWalletEmpty}"
                       Classes.smallLayout="{Binding IsSmallLayout}"
                       Classes.normalLayout="{Binding IsNormalLayout}"
                       Classes.wideLayout="{Binding IsWideLayout}">
-          <ItemsControl.Styles>
-            <Style Selector="ItemsControl.smallLayout">
-              <Setter Property="HorizontalAlignment" Value="Left"/>
-              <Setter Property="VerticalAlignment" Value="Top"/>
-              <Setter Property="Margin" Value="0 0"/>
-              <Setter Property="Padding" Value="0,0,0,10"/>
+          <ScrollViewer.Styles>
+            <Style Selector="ScrollViewer.smallLayout">
+              <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+              <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             </Style>
-            <Style Selector="ItemsControl.normalLayout">
-              <Setter Property="HorizontalAlignment" Value="Left"/>
-              <Setter Property="VerticalAlignment" Value="Top"/>
-              <Setter Property="Margin" Value="0 0"/>
-              <Setter Property="Padding" Value="0,0,0,10"/>
+            <Style Selector="ScrollViewer.normalLayout">
+              <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+              <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             </Style>
-            <Style Selector="ItemsControl.wideLayout">
-              <Setter Property="HorizontalAlignment" Value="Left"/>
-              <Setter Property="VerticalAlignment" Value="Top"/>
-              <Setter Property="Margin" Value="0 0"/>
-              <Setter Property="Padding" Value="0,0,10,0"/>
+            <Style Selector="ScrollViewer.wideLayout">
+              <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+              <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             </Style>
-            <Style Selector="ItemsControl > ContentPresenter" x:DataType="tiles:TileViewModel">
-              <Setter Property="Grid.Column" Value="{Binding Column}" />
-              <Setter Property="Grid.Row" Value="{Binding Row}" />
-              <Setter Property="Grid.ColumnSpan" Value="{Binding ColumnSpan}" />
-              <Setter Property="Grid.RowSpan" Value="{Binding RowSpan}" />
-              <Setter Property="IsVisible" Value="{Binding IsVisible}" />
-            </Style>
-          </ItemsControl.Styles>
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <c:BindableGrid ColumnDefinitionsSource="{Binding CurrentLayout.ColumnDefinitions}"
-                              RowDefinitionsSource="{Binding CurrentLayout.RowDefinitions}"
-                              ShowGridLines="False" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <locator:ViewLocator />
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </ScrollViewer>
-      <history:HistoryTable Name="HistoryTable" DataContext="{Binding History}"
-                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+          </ScrollViewer.Styles>
+          <i:Interaction.Behaviors>
+            <behaviors:HorizontalScrollViewerBehavior RequireShiftKey="False" ScrollChangeSize="Page"/>
+          </i:Interaction.Behaviors>
+          <ItemsControl Items="{Binding Tiles}"
+                        Classes.smallLayout="{Binding IsSmallLayout}"
+                        Classes.normalLayout="{Binding IsNormalLayout}"
+                        Classes.wideLayout="{Binding IsWideLayout}">
+            <ItemsControl.Styles>
+              <Style Selector="ItemsControl.smallLayout">
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Top"/>
+                <Setter Property="Margin" Value="0 0"/>
+                <Setter Property="Padding" Value="0,0,0,10"/>
+              </Style>
+              <Style Selector="ItemsControl.normalLayout">
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Top"/>
+                <Setter Property="Margin" Value="0 0"/>
+                <Setter Property="Padding" Value="0,0,0,10"/>
+              </Style>
+              <Style Selector="ItemsControl.wideLayout">
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Top"/>
+                <Setter Property="Margin" Value="0 0"/>
+                <Setter Property="Padding" Value="0,0,10,0"/>
+              </Style>
+              <Style Selector="ItemsControl > ContentPresenter" x:DataType="tiles:TileViewModel">
+                <Setter Property="Grid.Column" Value="{Binding Column}" />
+                <Setter Property="Grid.Row" Value="{Binding Row}" />
+                <Setter Property="Grid.ColumnSpan" Value="{Binding ColumnSpan}" />
+                <Setter Property="Grid.RowSpan" Value="{Binding RowSpan}" />
+                <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+              </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <c:BindableGrid ColumnDefinitionsSource="{Binding CurrentLayout.ColumnDefinitions}"
+                                RowDefinitionsSource="{Binding CurrentLayout.RowDefinitions}"
+                                ShowGridLines="False" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <locator:ViewLocator />
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <Border ClipToBounds="False"
+                CornerRadius="5"
+                Background="{DynamicResource TileRegionColor}"
+                Margin="6"
+                Padding="16"
+                BoxShadow="{DynamicResource InfoBoxShadow}"
+                DataContext="{Binding History}"
+                IsVisible="{Binding IsWalletEmpty}">
+          <Label Content="Please click Send or Receive buttons to start using your wallet."
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center">
+            <Label.Styles>
+              <Style Selector="Label > AccessText">
+                <Setter Property="TextWrapping" Value="Wrap"/>
+              </Style>
+            </Label.Styles>
+          </Label>
+        </Border>
+      </Panel>
+      <Panel>
+        <history:HistoryTable Name="HistoryTable"
+                              DataContext="{Binding History}"
+                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                              IsVisible="{Binding !IsWalletEmpty}"/>
+        <Border ClipToBounds="False"
+                CornerRadius="5"
+                Background="{DynamicResource TileRegionColor}"
+                Margin="6"
+                Padding="16"
+                BoxShadow="{DynamicResource InfoBoxShadow}"
+                DataContext="{Binding History}"
+                IsVisible="{Binding IsWalletEmpty}">
+          <Label Content="No transaction history."
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center">
+            <Label.Styles>
+              <Style Selector="Label > AccessText">
+                <Setter Property="TextWrapping" Value="Wrap"/>
+              </Style>
+            </Label.Styles>
+          </Label>
+        </Border>
+      </Panel>
     </DockPanel>
   </c:ContentArea>
 </UserControl>
