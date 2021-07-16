@@ -1,4 +1,5 @@
 using NBitcoin;
+using Nito.AsyncEx;
 using System;
 using WalletWasabi.Crypto;
 using WalletWasabi.Crypto.StrobeProtocol;
@@ -7,13 +8,15 @@ namespace WalletWasabi.WabiSabi.Backend.Models
 {
 	public class Alice
 	{
-		public Alice(Coin coin, OwnershipProof ownershipProof)
+		public Alice(Coin coin, OwnershipProof ownershipProof /* TODO Round */)
 		{
 			// TODO init syntax?
 			Coin = coin;
 			OwnershipProof = ownershipProof;
 			Id = CalculateHash();
 		}
+
+		public AsyncLock AsyncLock { get; } = new();
 
 		public uint256 Id { get; }
 		public DateTimeOffset Deadline { get; set; } = DateTimeOffset.UtcNow;
