@@ -130,7 +130,7 @@ namespace WalletWasabi.Tor
 
 					await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 				}
-				catch (OperationCanceledException ex)
+				catch (OperationCanceledException)
 				{
 					Logger.LogDebug("User canceled operation.");
 					setNewTcs = false;

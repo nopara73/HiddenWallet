@@ -179,7 +179,14 @@ namespace WalletWasabi.Tor.Http.Models
 			var hs = new HeaderSection();
 			foreach (var header in headers)
 			{
-				hs.Fields.Add(new HeaderField(header.Key, string.Join(",", header.Value)));
+				if (header.Key == "User-Agent")
+				{
+					hs.Fields.Add(new HeaderField(header.Key, string.Join(" ", header.Value)));
+				}
+				else
+				{
+					hs.Fields.Add(new HeaderField(header.Key, string.Join(",", header.Value)));
+				}
 			}
 
 			// -- Start [SECTION] Crazy VS2017/.NET Core 1.1 bug ---

@@ -30,6 +30,10 @@ namespace WalletWasabi.Tor.Socks5.Pool
 		/// <remarks>This parameter affects maximum parallelization for given URI host.</remarks>
 		public const int MaxConnectionsPerHost = 10;
 
+		/// <summary>User agent used for all HTTP requests.</summary>
+		/// <remarks>The user agent is the same as the latest Tor browser uses.</remarks>
+		public const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0";
+
 		public TorHttpPool(EndPoint endpoint)
 			: this(new TorTcpConnectionFactory(endpoint))
 		{
@@ -257,6 +261,8 @@ namespace WalletWasabi.Tor.Socks5.Pool
 			// in forwarded messages.
 			request.Version = HttpProtocol.HTTP11.Version;
 			request.Headers.AcceptEncoding.Add(new("gzip"));
+			request.Headers.UserAgent.Clear();
+			request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
 
 			string requestString = await request.ToHttpStringAsync(token).ConfigureAwait(false);
 			byte[] bytes = Encoding.UTF8.GetBytes(requestString);

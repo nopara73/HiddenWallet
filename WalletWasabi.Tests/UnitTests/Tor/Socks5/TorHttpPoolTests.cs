@@ -126,6 +126,7 @@ namespace WalletWasabi.Tests.UnitTests.Tor.Socks5
 			{
 				"GET / HTTP/1.1",
 				"Accept-Encoding:gzip",
+				"User-Agent:" + TorHttpPool.UserAgent,
 				"Host:somesite.com",
 				""
 			};
