@@ -291,10 +291,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 		public async Task<RoundState[]> GetStatusAsync(CancellationToken cancellationToken)
 		{
-			using (await AsyncLock.LockAsync(cancellationToken).ConfigureAwait(false))
-			{
-				return Rounds.Select(x => RoundState.FromRound(x)).ToArray();
-			}
+			return RoundsById.Select(x => RoundState.FromRound(x.Value)).ToArray();
 		}
 
 		public async Task<InputRegistrationResponse> RegisterInputAsync(InputRegistrationRequest request)
