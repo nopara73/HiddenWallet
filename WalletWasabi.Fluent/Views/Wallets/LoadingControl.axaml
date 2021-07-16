@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:WalletWasabi.Fluent.ViewModels.Wallets"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:DataType="vm:LoadingControlViewModel"
+             x:DataType="vm:LoadingViewModel"
              x:Class="WalletWasabi.Fluent.Views.Wallets.LoadingControl">
     <DockPanel LastChildFill="True" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="500">
         <TextBlock Text="{Binding StatusText}" Opacity="0.6" DockPanel.Dock="Bottom" Margin="0 10 0 0" />

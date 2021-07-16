@@ -25,6 +25,7 @@ namespace WalletWasabi.Fluent.ViewModels.StatusBar
 		[AutoNotify] private int _peers;
 		[AutoNotify] private bool _updateAvailable;
 		[AutoNotify] private bool _criticalUpdateAvailable;
+		[AutoNotify] private bool _isConnectionIssueDetected;
 		[AutoNotify] private string? _versionText;
 
 		public StatusBarViewModel()
@@ -42,10 +43,19 @@ namespace WalletWasabi.Fluent.ViewModels.StatusBar
 					x => x.Peers,
 					x => x.BitcoinCoreStatus,
 					x => x.UpdateAvailable,
-					x => x.CriticalUpdateAvailable)
+					x => x.CriticalUpdateAvailable,
+					x => x.IsConnectionIssueDetected)
 				.Throttle(TimeSpan.FromMilliseconds(100))
 				.ObserveOn(RxApp.MainThreadScheduler)
-				.Subscribe(_ => SetStatusBarState());
+				.Subscribe(_ =>
+				{
+					if (BackendStatus == BackendStatus.Connected)
+					{
+						IsConnectionIssueDetected = false;
+					}
+
+					SetStatusBarState();
+				});
 		}
 
 		public ICommand UpdateCommand { get; }
@@ -62,6 +72,12 @@ namespace WalletWasabi.Fluent.ViewModels.StatusBar
 
 		private void SetStatusBarState()
 		{
+			if (IsConnectionIssueDetected)
+			{
+				CurrentState = StatusBarState.ConnectionIssueDetected;
+				return;
+			}
+
 			if (CriticalUpdateAvailable)
 			{
 				CurrentState = StatusBarState.CriticalUpdateAvailable;
@@ -104,6 +120,18 @@ namespace WalletWasabi.Fluent.ViewModels.StatusBar
 			synchronizer.WhenAnyValue(x => x.BackendStatus)
 				.ObserveOn(RxApp.MainThreadScheduler)
 				.Subscribe(status => BackendStatus = status)
+				.DisposeWith(Disposables);
+
+			Observable.FromEventPattern<bool>(Services.Synchronizer, nameof(Services.Synchronizer.ResponseArrivedIsGenSocksServFail))
+				.Subscribe(_ =>
+				{
+					if (BackendStatus == BackendStatus.Connected) // TODO: the event invoke must be refactored in Synchronizer
+					{
+						return;
+					}
+
+					IsConnectionIssueDetected = true;
+				})
 				.DisposeWith(Disposables);
 
 			Peers = TorStatus == TorStatus.NotRunning ? 0 : nodes.Count;
