@@ -9,18 +9,20 @@ namespace WalletWasabi.Services
 {
 	public class SystemAwakeChecker : PeriodicRunner
 	{
-		public SystemAwakeChecker(WalletManager walletManager) : base(TimeSpan.FromMinutes(1))
+		public SystemAwakeChecker(WalletManager walletManager, SynchronizationContext? synchronizationContext) : base(TimeSpan.FromMinutes(1))
 		{
 			WalletManager = walletManager;
+			SynchronizationContext = synchronizationContext;
 		}
 
 		private WalletManager WalletManager { get; }
+		public SynchronizationContext? SynchronizationContext { get; }
 
 		protected override async Task ActionAsync(CancellationToken cancel)
 		{
 			if (WalletManager.AnyCoinJoinInProgress())
 			{
-				await EnvironmentHelpers.ProlongSystemAwakeAsync().ConfigureAwait(false);
+				await EnvironmentHelpers.ProlongSystemAwakeAsync(SynchronizationContext).ConfigureAwait(false);
 			}
 		}
 	}

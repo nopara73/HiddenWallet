@@ -78,10 +78,13 @@ namespace WalletWasabi.Gui
 
 		public JsonRpcServer? RpcServer { get; private set; }
 
+		private SynchronizationContext? SynchronizationContext { get; }
+
 		public Global(string dataDir, Config config, UiConfig uiConfig, WalletManager walletManager)
 		{
 			using (BenchmarkLogger.Measure())
 			{
+				SynchronizationContext = SynchronizationContext.Current;
 				StoppingCts = new CancellationTokenSource();
 				DataDir = dataDir;
 				Config = config;
@@ -144,7 +147,7 @@ namespace WalletWasabi.Gui
 				await LegalChecker.InitializeAsync(HostedServices.Get<UpdateChecker>()).ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
 
-				HostedServices.Register<SystemAwakeChecker>(new SystemAwakeChecker(WalletManager), "System Awake Checker");
+				HostedServices.Register<SystemAwakeChecker>(new SystemAwakeChecker(WalletManager, SynchronizationContext), "System Awake Checker");
 
 				if (Config.UseTor && Network != Network.RegTest)
 				{

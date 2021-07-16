@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using WalletWasabi.Helpers;
 using Xunit;
@@ -9,7 +10,9 @@ namespace WalletWasabi.Tests.UnitTests.Clients
 		[Fact]
 		public async Task ProlongSystemAwakeCanBeExecutedAsync()
 		{
-			await EnvironmentHelpers.ProlongSystemAwakeAsync();
+			SynchronizationContext? synchronizationContext = SynchronizationContext.Current;
+
+			await EnvironmentHelpers.ProlongSystemAwakeAsync(synchronizationContext);
 		}
 	}
 }

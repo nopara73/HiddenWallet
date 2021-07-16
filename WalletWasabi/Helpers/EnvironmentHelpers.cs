@@ -241,16 +241,26 @@ namespace WalletWasabi.Helpers
 		/// Reset the system sleep timer, this method has to be called from time to time to prevent sleep.
 		/// It does not prevent the display to turn off.
 		/// </summary>
-		public static async Task ProlongSystemAwakeAsync()
+		public static async Task ProlongSystemAwakeAsync(SynchronizationContext? synchronizationContext = null)
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				// Reset the system sleep timer.
-				var result = SetThreadExecutionState(EXECUTION_STATE.ES_SYSTEM_REQUIRED);
-				if (result == 0)
+				if (synchronizationContext is null)
 				{
-					throw new InvalidOperationException("SetThreadExecutionState failed.");
+					throw new InvalidOperationException("SynchronizationContext is missing.");
 				}
+
+				// We have to call SetThreadExecutionState on an app-lifetime thread.
+				// https://stackoverflow.com/questions/68285202/how-to-call-of-setthreadexecutionstate-correctly
+				synchronizationContext.Post(_ =>
+				{
+					// Reset the system sleep timer.
+					var result = SetThreadExecutionState(EXECUTION_STATE.ES_SYSTEM_REQUIRED);
+					if (result == 0)
+					{
+						Logger.LogError("SetThreadExecutionState failed.");
+					}
+				}, null);
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 			{
