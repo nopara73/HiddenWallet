@@ -103,11 +103,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 		{
 			foreach (var round in Rounds.Where(x => x.Phase == Phase.ConnectionConfirmation).ToArray())
 			{
-				if (round.Alices.All(x => x.ConfirmedConnection))
-				{
-					round.SetPhase(Phase.OutputRegistration);
-				}
-				else if (round.ConnectionConfirmationStart + round.ConnectionConfirmationTimeout < DateTimeOffset.UtcNow)
+				if (round.ConnectionConfirmationStart + round.ConnectionConfirmationTimeout < DateTimeOffset.UtcNow)
 				{
 					var alicesDidntConfirm = round.Alices.Where(x => !x.ConfirmedConnection).ToArray();
 					foreach (var alice in alicesDidntConfirm)
@@ -279,6 +275,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 		private void TimeoutAlices()
 		{
+			// FIXME also time them out during connection confirmation
 			foreach (var round in Rounds.Where(x => !x.IsInputRegistrationEnded(Config.MaxInputCountByRound, Config.GetInputRegistrationTimeout(x))).ToArray())
 			{
 				// TODO remove from Alices container
@@ -286,6 +283,8 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				if (removedAliceCount > 0)
 				{
 					round.LogInfo($"{removedAliceCount} alices timed out and removed.");
+
+					// TODO recheck if all alices confirmed?
 				}
 			}
 		}
@@ -515,25 +514,21 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				var commitAmountZeroCredentialResponse = round.AmountCredentialIssuer.PrepareResponse(request.ZeroAmountCredentialRequests);
 				var commitVsizeZeroCredentialResponse = round.VsizeCredentialIssuer.PrepareResponse(request.ZeroVsizeCredentialRequests);
 
-				using (await AsyncLock.LockAsync().ConfigureAwait(false))
+				switch (round.Phase)
 				{
-					if (round.Phase == Phase.InputRegistration)
-					{
+					case Phase.InputRegistration:
 						alice.SetDeadlineRelativeTo(round.ConnectionConfirmationTimeout);
-
 						return new(
 							commitAmountZeroCredentialResponse.Commit(),
 							commitVsizeZeroCredentialResponse.Commit());
-					}
-					else if (round.Phase == Phase.ConnectionConfirmation)
-					{
+
+					case Phase.ConnectionConfirmation:
 						// Ensure the input can be added to the CoinJoin
 						round.Assert<ConstructionState>().AddInput(alice.Coin);
-					}
-					else
-					{
+						break;
+
+					default:
 						throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.WrongPhase, $"Round ({request.RoundId}): Wrong phase ({round.Phase}).");
-					}
 				}
 
 				// Connection confirmation phase, verify the range proofs
@@ -556,6 +551,11 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 					// update state
 					alice.ConfirmedConnection = true;
 					round.CoinjoinState = state;
+
+					if (round.Alices.All(x => x.ConfirmedConnection))
+					{
+						round.SetPhase(Phase.OutputRegistration);
+					}
 
 					return new(
 						commitAmountZeroCredentialResponse.Commit(),
