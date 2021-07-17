@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -37,6 +38,8 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			VsizeCredentialIssuerParameters = VsizeCredentialIssuer.CredentialIssuerSecretKey.ComputeCredentialIssuerParameters();
 
 			Id = CalculateHash();
+
+			Alices = new(AlicesById, alice => alice.Id);
 		}
 
 		private AsyncLock AsyncLock { get; } = new();
@@ -52,9 +55,11 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 		public CredentialIssuer VsizeCredentialIssuer { get; }
 		public CredentialIssuerParameters AmountCredentialIssuerParameters { get; }
 		public CredentialIssuerParameters VsizeCredentialIssuerParameters { get; }
-		public List<Alice> Alices { get; } = new();
-		public int InputCount => Alices.Count;
-		public List<Bob> Bobs { get; } = new();
+		public ConcurrentDictionary<uint256, Alice> AlicesById { get; } = new();
+		[ObsoleteAttribute("Access to internal Arena state should be removed from tests.")]
+		public ConcurrentDictionaryValueCollectionView<Alice> Alices { get; }
+		public int InputCount => AlicesById.Count;
+		public ConcurrentBag<Bob> Bobs { get; } = new();
 
 		public Round? BlameOf => RoundParameters.BlameOf;
 		public bool IsBlameRound => RoundParameters.IsBlameRound;
@@ -167,7 +172,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				// round phase matters)
 				if (Phase == Phase.InputRegistration && alice.Deadline < DateTimeOffset.UtcNow)
 				{
-					Alices.Remove(alice);
+					AlicesById.Remove(alice.Id, out _);
 					this.LogInfo($"Alice {alice.Id} timed out and removed.");
 				}
 			}
@@ -221,14 +226,17 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 			if (ConnectionConfirmationStart + ConnectionConfirmationTimeout < DateTimeOffset.UtcNow)
 			{
-				var alicesDidntConfirm = Alices.Where(x => !x.ConfirmedConnection).ToArray();
+				var alicesDidntConfirm = AlicesById.Select(x => x.Value).Where(x => !x.ConfirmedConnection).ToArray();
+				var removedAliceCount = 0;
 				foreach (var alice in alicesDidntConfirm)
 				{
 					prison.Note(alice, Id);
+					AlicesById.Remove(alice.Id, out _);
+					removedAliceCount++;
 				}
-				var removedAliceCount = Alices.RemoveAll(x => alicesDidntConfirm.Contains(x));
 				this.LogInfo($"{removedAliceCount} alices removed because they didn't confirm.");
 
+				// TODO is this a race condition?
 				if (InputCount < config.MinInputCountByRound)
 				{
 					SetPhase(Phase.Ended);
@@ -250,7 +258,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				this.LogInfo($"{coinjoin.Inputs.Count} inputs were added.");
 				this.LogInfo($"{coinjoin.Outputs.Count} outputs were added.");
 
-				long aliceSum = Alices.Sum(x => x.CalculateRemainingAmountCredentials(FeeRate));
+				long aliceSum = AlicesById.Sum(x => x.Value.CalculateRemainingAmountCredentials(FeeRate));
 				long bobSum = Bobs.Sum(x => x.CredentialAmount);
 				var diff = aliceSum - bobSum;
 
@@ -258,7 +266,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				// This won't be signed by the alice who failed to provide output, so we know who to ban.
 				var diffMoney = Money.Satoshis(diff) - coinjoin.Parameters.FeeRate.GetFee(config.BlameScript.EstimateOutputVsize());
 
-				var allReady = Alices.All(a => a.ReadyToSign); // FIXME remove: always false?
+				var allReady = AlicesById.All(a => a.Value.ReadyToSign); // FIXME remove: always false?
 				if (!allReady && diffMoney > coinjoin.Parameters.AllowedOutputAmounts.Min)
 				{
 					coinjoin = coinjoin.AddOutput(new TxOut(diffMoney, config.BlameScript));
@@ -286,7 +294,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 			var unsignedPrevouts = state.UnsignedInputs.ToHashSet();
 
-			var alicesWhoDidntSign = Alices
+			var alicesWhoDidntSign = AlicesById.Select(x => x.Value)
 				.Select(alice => (Alice: alice, alice.Coin))
 				.Where(x => unsignedPrevouts.Contains(x.Coin))
 				.Select(x => x.Alice)
@@ -295,9 +303,9 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			foreach (var alice in alicesWhoDidntSign)
 			{
 				arena.Prison.Note(alice, Id);
+				AlicesById.Remove(alice.Id, out _);
 			}
 
-			Alices.RemoveAll(x => alicesWhoDidntSign.Contains(x));
 			SetPhase(Phase.Ended);
 
 			if (InputCount >= arena.Config.MinInputCountByRound)
@@ -316,7 +324,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 					// Logging.
 					this.LogInfo("Trying to broadcast coinjoin.");
-					Coin[]? spentCoins = Alices.Select(x => x.Coin).ToArray();
+					Coin[]? spentCoins = AlicesById.Select(x => x.Value.Coin).ToArray();
 					Money networkFee = coinjoin.GetFee(spentCoins);
 					FeeRate feeRate = coinjoin.GetFeeRate(spentCoins);
 					this.LogInfo($"Network Fee: {networkFee.ToString(false, false)} BTC.");
@@ -407,7 +415,10 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				// FIXME is this correct?
 				alice.SetDeadline(ConnectionConfirmationTimeout * 0.9);
 
-				Alices.Add(alice);
+				if (!AlicesById.TryAdd(alice.Id, alice))
+				{
+					throw new InvalidOperationException();
+				}
 			}
 
 			return new(alice.Id,
@@ -427,7 +438,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				// At this point ownership proofs have not yet been revealed
 				// to other participants, so AliceId can only be known to
 				// its owner.
-				Alices.Remove(alice);
+				AlicesById.Remove(alice.Id, out _);
 			}
 		}
 
@@ -486,7 +497,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				alice.ConfirmedConnection = true;
 				CoinjoinState = state;
 
-				if (Alices.All(x => x.ConfirmedConnection))
+				if (AlicesById.All(x => x.Value.ConfirmedConnection))
 				{
 					SetPhase(Phase.OutputRegistration);
 				}
@@ -597,7 +608,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			{
 				alice.ReadyToSign = true;
 
-				if (Alices.All(a => a.ReadyToSign))
+				if (AlicesById.All(a => a.Value.ReadyToSign))
 				{
 					var coinjoin = Assert<ConstructionState>();
 
