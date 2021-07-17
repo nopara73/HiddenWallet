@@ -9,14 +9,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using WalletWasabi.Bases;
 using WalletWasabi.BitcoinCore.Rpc;
-using WalletWasabi.Crypto;
 using WalletWasabi.Crypto.Randomness;
 using WalletWasabi.WabiSabi.Backend.Banning;
 using WalletWasabi.WabiSabi.Backend.Models;
 using WalletWasabi.WabiSabi.Backend.PostRequests;
-using WalletWasabi.WabiSabi.Crypto.CredentialRequesting;
 using WalletWasabi.WabiSabi.Models;
-using WalletWasabi.WabiSabi.Models.MultipartyTransaction;
 
 namespace WalletWasabi.WabiSabi.Backend.Rounds
 {
@@ -29,26 +26,26 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			Rpc = rpc;
 			Prison = prison;
 			Random = new SecureRandom();
+			Rounds = new(RoundsById, round => round.Id);
 		}
 
 		public ConcurrentDictionary<OutPoint, Alice> AlicesByOutpoint { get; } = new();
 		public ConcurrentDictionary<uint256, Alice> AlicesById { get; } = new();
 		public ConcurrentDictionary<uint256, Round> RoundsById { get; } = new();
+		[ObsoleteAttribute("Access to internal Arena state should be removed from tests.")]
+		public ConcurrentDictionaryValueCollectionView<Round> Rounds { get; }
 
-		public HashSet<Round> Rounds { get; } = new();
-		private AsyncLock AsyncLock { get; } = new();
 		public Network Network { get; }
 		public WabiSabiConfig Config { get; }
 		public IRPCClient Rpc { get; }
 		public Prison Prison { get; }
 		public SecureRandom Random { get; }
 
-		public IEnumerable<Round> ActiveRounds => Rounds.Where(x => x.Phase != Phase.Ended);
+		public IEnumerable<Round> ActiveRounds => RoundsById.Select(x => x.Value).Where(x => x.Phase != Phase.Ended);
 
 		private void RemoveRound(Round round)
 		{
 			RoundsById.Remove(round.Id, out _);
-			Rounds.Remove(round);
 
 			foreach (var alice in AlicesById.Values.Where(alice => alice.Round == round))
 			{
@@ -59,10 +56,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 		protected override async Task ActionAsync(CancellationToken cancel)
 		{
-			using (await AsyncLock.LockAsync(cancel).ConfigureAwait(false))
-			{
-				TimeoutRounds();
-			}
+			TimeoutRounds();
 
 			await TimeoutAlicesAsync(cancel);
 
@@ -140,12 +134,6 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			if (!RoundsById.TryAdd(round.Id, round))
 			{
 				throw new InvalidOperationException();
-			}
-
-			// TODO remove when arena.Rounds HashSet emulation is in place
-			using (await AsyncLock.LockAsync(cancel).ConfigureAwait(false))
-			{
-				Rounds.Add(round);
 			}
 		}
 
