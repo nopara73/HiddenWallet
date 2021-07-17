@@ -1,11 +1,14 @@
-using NBitcoin;
-using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using NBitcoin;
+using Nito.AsyncEx;
+using WalletWasabi.BitcoinCore.Rpc;
 using WalletWasabi.Crypto;
 using WalletWasabi.Crypto.StrobeProtocol;
+using WalletWasabi.WabiSabi.Backend.Banning;
 using WalletWasabi.WabiSabi.Backend.Models;
 using WalletWasabi.WabiSabi.Backend.PostRequests;
 using WalletWasabi.WabiSabi.Crypto;
@@ -155,6 +158,192 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				.Append(ProtocolConstants.RoundFeeRateStrobeLabel, FeeRate.FeePerK)
 				.GetHash();
 
+		public async Task TimeoutAliceAsync(Alice alice, CancellationToken cancel)
+		{
+			using (await AsyncLock.LockAsync(cancel).ConfigureAwait(false))
+			{
+				// FIXME also time them out during connection confirmation, and
+				// avoid locking round unless removing (alice is locked so only
+				// round phase matters)
+				if (Phase == Phase.InputRegistration && alice.Deadline < DateTimeOffset.UtcNow)
+				{
+					Alices.Remove(alice);
+					this.LogInfo($"Alice {alice.Id} timed out and removed.");
+				}
+			}
+		}
+
+		public async Task StepAsync(Arena arena, CancellationToken cancel)
+		{
+			using (await AsyncLock.LockAsync(cancel).ConfigureAwait(false))
+			{
+				switch (Phase)
+				{
+					case Phase.InputRegistration:
+						StepInputRegistrationPhase(arena.Config);
+						break;
+					case Phase.ConnectionConfirmation:
+						StepConnectionConfirmationPhase(arena.Config, arena.Prison);
+						break;
+					case Phase.OutputRegistration:
+						StepOutputRegistrationPhase(arena.Config);
+						break;
+					case Phase.TransactionSigning:
+						await StepTransactionSigningPhase(arena, cancel).ConfigureAwait(false);
+						break;
+					case Phase.Ended:
+						await StepTransactionBroadcastingAsync(arena.Rpc, cancel).ConfigureAwait(false);
+						break;
+				}
+			}
+		}
+
+		private void StepInputRegistrationPhase(WabiSabiConfig config)
+		{
+			if (IsInputRegistrationEnded(config.MaxInputCountByRound, config.GetInputRegistrationTimeout(this)))
+			{
+				if (InputCount < config.MinInputCountByRound)
+				{
+					SetPhase(Phase.Ended);
+					this.LogInfo($"Not enough inputs ({InputCount}) in {nameof(Phase.InputRegistration)} phase.");
+				}
+				else
+				{
+					SetPhase(Phase.ConnectionConfirmation);
+				}
+			}
+		}
+
+		private void StepConnectionConfirmationPhase(WabiSabiConfig config, Prison prison)
+		{
+			// TODO check if inputcount == confirmed count when alices are
+			// allowed to expire during connection confirmation?
+
+			if (ConnectionConfirmationStart + ConnectionConfirmationTimeout < DateTimeOffset.UtcNow)
+			{
+				var alicesDidntConfirm = Alices.Where(x => !x.ConfirmedConnection).ToArray();
+				foreach (var alice in alicesDidntConfirm)
+				{
+					prison.Note(alice, Id);
+				}
+				var removedAliceCount = Alices.RemoveAll(x => alicesDidntConfirm.Contains(x));
+				this.LogInfo($"{removedAliceCount} alices removed because they didn't confirm.");
+
+				if (InputCount < config.MinInputCountByRound)
+				{
+					SetPhase(Phase.Ended);
+					this.LogInfo($"Not enough inputs ({InputCount}) in {nameof(Phase.ConnectionConfirmation)} phase.");
+				}
+				else
+				{
+					SetPhase(Phase.OutputRegistration);
+				}
+			}
+		}
+
+		private void StepOutputRegistrationPhase(WabiSabiConfig config)
+		{
+			if (OutputRegistrationStart + OutputRegistrationTimeout < DateTimeOffset.UtcNow)
+			{
+				var coinjoin = Assert<ConstructionState>();
+
+				this.LogInfo($"{coinjoin.Inputs.Count} inputs were added.");
+				this.LogInfo($"{coinjoin.Outputs.Count} outputs were added.");
+
+				long aliceSum = Alices.Sum(x => x.CalculateRemainingAmountCredentials(FeeRate));
+				long bobSum = Bobs.Sum(x => x.CredentialAmount);
+				var diff = aliceSum - bobSum;
+
+				// If timeout we must fill up the outputs to build a reasonable transaction.
+				// This won't be signed by the alice who failed to provide output, so we know who to ban.
+				var diffMoney = Money.Satoshis(diff) - coinjoin.Parameters.FeeRate.GetFee(config.BlameScript.EstimateOutputVsize());
+
+				var allReady = Alices.All(a => a.ReadyToSign); // FIXME remove: always false?
+				if (!allReady && diffMoney > coinjoin.Parameters.AllowedOutputAmounts.Min)
+				{
+					coinjoin = coinjoin.AddOutput(new TxOut(diffMoney, config.BlameScript));
+					this.LogInfo("Filled up the outputs to build a reasonable transaction because some alice failed to provide its output.");
+				}
+
+				CoinjoinState = coinjoin.Finalize();
+
+				SetPhase(Phase.TransactionSigning);
+			}
+		}
+
+		private async Task StepTransactionSigningPhase(Arena arena, CancellationToken cancel)
+		{
+			if (TransactionSigningStart + TransactionSigningTimeout < DateTimeOffset.UtcNow && !Assert<SigningState>().IsFullySigned)
+			{
+				this.LogWarning($"Round {Id}: Signing phase timed out after {TransactionSigningTimeout.TotalSeconds} seconds.");
+				await FailTransactionSigningPhaseAsync(arena, cancel);
+			}
+		}
+
+		private async Task FailTransactionSigningPhaseAsync(Arena arena, CancellationToken cancel)
+		{
+			var state = Assert<SigningState>();
+
+			var unsignedPrevouts = state.UnsignedInputs.ToHashSet();
+
+			var alicesWhoDidntSign = Alices
+				.Select(alice => (Alice: alice, alice.Coin))
+				.Where(x => unsignedPrevouts.Contains(x.Coin))
+				.Select(x => x.Alice)
+				.ToHashSet();
+
+			foreach (var alice in alicesWhoDidntSign)
+			{
+				arena.Prison.Note(alice, Id);
+			}
+
+			Alices.RemoveAll(x => alicesWhoDidntSign.Contains(x));
+			SetPhase(Phase.Ended);
+
+			if (InputCount >= arena.Config.MinInputCountByRound)
+			{
+				await arena.CreateBlameRoundAsync(this, cancel).ConfigureAwait(false);
+			}
+		}
+
+		private async Task StepTransactionBroadcastingAsync(IRPCClient rpc, CancellationToken cancel)
+		{
+			if (CoinjoinState is SigningState state)
+			{
+				if (state.IsFullySigned && !WasTransactionBroadcast)
+				{
+					var coinjoin = state.CreateTransaction();
+
+					// Logging.
+					this.LogInfo("Trying to broadcast coinjoin.");
+					Coin[]? spentCoins = Alices.Select(x => x.Coin).ToArray();
+					Money networkFee = coinjoin.GetFee(spentCoins);
+					FeeRate feeRate = coinjoin.GetFeeRate(spentCoins);
+					this.LogInfo($"Network Fee: {networkFee.ToString(false, false)} BTC.");
+					this.LogInfo($"Network Fee Rate: {feeRate.FeePerK.ToDecimal(MoneyUnit.Satoshi) / 1000} sat/vByte.");
+					this.LogInfo($"Number of inputs: {coinjoin.Inputs.Count}.");
+					this.LogInfo($"Number of outputs: {coinjoin.Outputs.Count}.");
+					this.LogInfo($"Serialized Size: {coinjoin.GetSerializedSize() / 1024} KB.");
+					this.LogInfo($"VSize: {coinjoin.GetVirtualSize() / 1024} KB.");
+					foreach (var (value, count) in coinjoin.GetIndistinguishableOutputs(includeSingle: false))
+					{
+						this.LogInfo($"There are {count} occurrences of {value.ToString(true, false)} BTC output.");
+					}
+
+					try
+					{
+						await rpc.SendRawTransactionAsync(coinjoin).ConfigureAwait(false);
+						WasTransactionBroadcast = true;
+						this.LogInfo($"Successfully broadcast the CoinJoin: {coinjoin.GetHash()}.");
+					}
+					catch (Exception ex)
+					{
+						this.LogWarning($"Transaction broadcasting failed, reason: '{ex}'.");
+					}
+				}
+			}
+		}
+
 		public async Task<InputRegistrationResponse> RegisterInputAsync(Alice alice, InputRegistrationRequest request, WabiSabiConfig config)
 		{
 			using (await AsyncLock.LockAsync().ConfigureAwait(false))
@@ -214,7 +403,10 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 					throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.WrongPhase);
 				}
 
-				alice.SetDeadlineRelativeTo(ConnectionConfirmationTimeout);
+				// Have alice timeouts a bit sooner than the timeout of connection confirmation phase.
+				// FIXME is this correct?
+				alice.SetDeadline(ConnectionConfirmationTimeout * 0.9);
+
 				Alices.Add(alice);
 			}
 
@@ -259,7 +451,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			switch (Phase)
 			{
 				case Phase.InputRegistration:
-					alice.SetDeadlineRelativeTo(ConnectionConfirmationTimeout);
+					alice.SetDeadline(ConnectionConfirmationTimeout * 0.9); // FIXME is this correct?
 					return new(
 						commitAmountZeroCredentialResponse.Commit(),
 						commitVsizeZeroCredentialResponse.Commit());
@@ -436,6 +628,11 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 				// at this point all of the witnesses have been verified and the state can be updated
 				CoinjoinState = state;
+
+				if (state.IsFullySigned)
+				{
+					SetPhase(Phase.Ended);
+				}
 			}
 		}
 	}

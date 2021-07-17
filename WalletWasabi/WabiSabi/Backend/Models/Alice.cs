@@ -43,10 +43,9 @@ namespace WalletWasabi.WabiSabi.Backend.Models
 
 		public Money CalculateRemainingAmountCredentials(FeeRate feeRate) => Coin.EffectiveValue(feeRate);
 
-		public void SetDeadlineRelativeTo(TimeSpan connectionConfirmationTimeout)
+		public void SetDeadline(TimeSpan inputTimeout)
 		{
-			// Have alice timeouts a bit sooner than the timeout of connection confirmation phase.
-			Deadline = DateTimeOffset.UtcNow + (connectionConfirmationTimeout * 0.9);
+			Deadline = DateTimeOffset.UtcNow + inputTimeout;
 		}
 
 		private uint256 CalculateHash()
