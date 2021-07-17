@@ -134,21 +134,22 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 		{
 			foreach (var round in Rounds.Where(x => x.Phase == Phase.OutputRegistration).ToArray())
 			{
-				long aliceSum = round.Alices.Sum(x => x.CalculateRemainingAmountCredentials(round.FeeRate));
-				long bobSum = round.Bobs.Sum(x => x.CredentialAmount);
-				var diff = aliceSum - bobSum;
-				var allReady = round.Alices.All(a => a.ReadyToSign);
-
-				if (allReady || round.OutputRegistrationStart + round.OutputRegistrationTimeout < DateTimeOffset.UtcNow)
+				if (round.OutputRegistrationStart + round.OutputRegistrationTimeout < DateTimeOffset.UtcNow)
 				{
 					var coinjoin = round.Assert<ConstructionState>();
 
 					round.LogInfo($"{coinjoin.Inputs.Count} inputs were added.");
 					round.LogInfo($"{coinjoin.Outputs.Count} outputs were added.");
 
+					long aliceSum = round.Alices.Sum(x => x.CalculateRemainingAmountCredentials(round.FeeRate));
+					long bobSum = round.Bobs.Sum(x => x.CredentialAmount);
+					var diff = aliceSum - bobSum;
+
 					// If timeout we must fill up the outputs to build a reasonable transaction.
 					// This won't be signed by the alice who failed to provide output, so we know who to ban.
 					var diffMoney = Money.Satoshis(diff) - coinjoin.Parameters.FeeRate.GetFee(Config.BlameScript.EstimateOutputVsize());
+
+					var allReady = round.Alices.All(a => a.ReadyToSign);
 					if (!allReady && diffMoney > coinjoin.Parameters.AllowedOutputAmounts.Min)
 					{
 						coinjoin = coinjoin.AddOutput(new TxOut(diffMoney, Config.BlameScript));
@@ -437,6 +438,18 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				using (await AsyncLock.LockAsync().ConfigureAwait(false))
 				{
 					alice.ReadyToSign = true;
+
+					if (round.Alices.All(a => a.ReadyToSign))
+					{
+						var coinjoin = round.Assert<ConstructionState>();
+
+						round.LogInfo($"{coinjoin.Inputs.Count} inputs were added.");
+						round.LogInfo($"{coinjoin.Outputs.Count} outputs were added.");
+
+						round.CoinjoinState = coinjoin.Finalize();
+
+						round.SetPhase(Phase.TransactionSigning);
+					}
 				}
 			}
 		}
