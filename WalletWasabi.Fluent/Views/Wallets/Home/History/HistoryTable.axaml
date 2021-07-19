@@ -2,6 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+             xmlns:ir="clr-namespace:Avalonia.Xaml.Interactions.Responsive;assembly=Avalonia.Xaml.Interactions"
              xmlns:c="using:WalletWasabi.Fluent.Controls"
              xmlns:history="clr-namespace:WalletWasabi.Fluent.ViewModels.Wallets.Home.History"
              xmlns:converters="clr-namespace:WalletWasabi.Fluent.Converters"
@@ -68,7 +70,6 @@
           </ControlTemplate>
         </Setter>
       </Style>
-
       <Style Selector="DataGridRow /template/ Rectangle#BackgroundRectangle.selectAnimation">
         <Style.Animations>
           <Animation Duration="1.25">
@@ -93,7 +94,39 @@
           </Animation>
         </Style.Animations>
       </Style>
-
+      <Style Selector="Button.labelFlyout">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Padding" Value="12,5,12,5" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MinWidth" Value="38" />
+      </Style>
+      <Style Selector="Button.labelFlyout /template/ ContentPresenter">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
+        <Setter Property="Background" Value="{DynamicResource InvisibleButtonBackgroundColor}" />
+        <Setter Property="CornerRadius" Value="2" />
+      </Style>
+      <Style Selector="Button.labelFlyout:pointerover /template/ ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
+      </Style>
+      <Style Selector="Button.labelFlyout:pressed /template/ ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
+      </Style>
+      <Style Selector="Button.labelFlyout:disabled /template/ ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
+      </Style>
+      <Style Selector="TextBlock.hidden">
+        <Setter Property="IsVisible" Value="False"/>
+      </Style>
+      <Style Selector="TextBlock.visible">
+        <Setter Property="IsVisible" Value="True"/>
+      </Style>
+      <Style Selector="PathIcon.hidden">
+        <Setter Property="IsVisible" Value="False"/>
+      </Style>
     </DataGrid.Styles>
 
     <DataGrid.Columns>
@@ -131,40 +164,15 @@
       <!-- Labels -->
 
       <DataGridTemplateColumn Header="Labels"
-                              Width="*"
+                              Width="Auto"
                               CanUserSort="False"
                               SortMemberPath="Label">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
             <DockPanel Margin="0,4,0,0" x:DataType="history:HistoryItemViewModel">
-              <DockPanel.Styles>
-                <Style Selector="Button.labelFlyout">
-                  <Setter Property="Margin" Value="0" />
-                  <Setter Property="Padding" Value="12,5,12,5" />
-                  <Setter Property="VerticalAlignment" Value="Top" />
-                  <Setter Property="HorizontalAlignment" Value="Left" />
-                  <Setter Property="MinHeight" Value="0" />
-                  <Setter Property="MinWidth" Value="38" />
-                </Style>
-                <Style Selector="Button.labelFlyout /template/ ContentPresenter">
-                  <Setter Property="Cursor" Value="Hand" />
-                  <Setter Property="BorderThickness" Value="1" />
-                  <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
-                  <Setter Property="Background" Value="{DynamicResource InvisibleButtonBackgroundColor}" />
-                  <Setter Property="CornerRadius" Value="2" />
-                </Style>
-                <Style Selector="Button.labelFlyout:pointerover /template/ ContentPresenter">
-                  <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
-                </Style>
-                <Style Selector="Button.labelFlyout:pressed /template/ ContentPresenter">
-                  <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
-                </Style>
-                <Style Selector="Button.labelFlyout:disabled /template/ ContentPresenter">
-                  <Setter Property="BorderBrush" Value="{StaticResource TagsBoxControlForeground}" />
-                </Style>
-              </DockPanel.Styles>
               <c:TagsBox Padding="0"
                          Margin="0"
+                         MinWidth="0"
                          BorderThickness="0"
                          DockPanel.Dock="Left"
                          IsReadOnly="True"
@@ -177,9 +185,17 @@
                 <Button.Flyout>
                   <Flyout Placement="BottomEdgeAlignedLeft" ShowMode="TransientWithDismissOnPointerMoveAway">
                     <c:TagsBox IsReadOnly="True"
+                               MinWidth="0"
                                Items="{Binding FilteredLabel}" />
                   </Flyout>
                 </Button.Flyout>
+                <ToolTip.Tip>
+                  <Panel>
+                    <c:TagsBox IsReadOnly="True"
+                               Margin="4,6,0,0"
+                               Items="{Binding FilteredLabel}" />
+                  </Panel>
+                </ToolTip.Tip>
               </Button>
             </DockPanel>
           </DataTemplate>
@@ -189,16 +205,26 @@
       <!-- Incoming -->
       <DataGridTemplateColumn Header="Incoming (BTC)"
                               Width="*"
+                              MinWidth="160"
+                              MaxWidth="170"
                               SortMemberPath="IncomingAmount">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
-            <StackPanel x:DataType="history:HistoryItemViewModel"
-                        IsVisible="{Binding !!IncomingAmount}"
-                        HorizontalAlignment="Right">
-              <PathIcon Data="{StaticResource arrow_down_right_regular}" Opacity="0.6" />
-              <TextBlock Classes="monoSpaced"
-                         Text="{Binding IncomingAmount, Converter={x:Static converters:MoneyConverters.ToFormattedString}}" />
-            </StackPanel>
+            <Panel Name="Panel" HorizontalAlignment="Stretch">
+              <StackPanel x:DataType="history:HistoryItemViewModel"
+                          IsVisible="{Binding !!IncomingAmount}"
+                          HorizontalAlignment="Right">
+                <PathIcon Data="{StaticResource arrow_down_right_regular}" Opacity="0.6">
+                  <i:Interaction.Behaviors>
+                    <ir:AdaptiveBehavior SourceControl="{Binding #Panel}" x:CompileBindings="False">
+                      <ir:AdaptiveClassSetter MinWidth="0" MaxWidth="120" ClassName="hidden"/>
+                    </ir:AdaptiveBehavior>
+                  </i:Interaction.Behaviors>
+                </PathIcon>
+                <TextBlock Classes="monoSpaced"
+                           Text="{Binding IncomingAmount, Converter={x:Static converters:MoneyConverters.ToFormattedString}}" />
+              </StackPanel>
+            </Panel>
           </DataTemplate>
         </DataGridTemplateColumn.CellTemplate>
       </DataGridTemplateColumn>
@@ -206,23 +232,33 @@
       <!-- Outgoing -->
       <DataGridTemplateColumn Header="Outgoing (BTC)"
                               Width="*"
+                              MinWidth="160"
+                              MaxWidth="170"
                               SortMemberPath="OutgoingAmount">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
-            <StackPanel x:DataType="history:HistoryItemViewModel"
-                        IsVisible="{Binding !!OutgoingAmount}"
-                        HorizontalAlignment="Right">
-              <PathIcon Data="{StaticResource arrow_up_right_regular}" Opacity="0.6" />
-              <TextBlock Classes="monoSpaced"
-                         Text="{Binding OutgoingAmount, Converter={x:Static converters:MoneyConverters.ToFormattedString}}" />
-            </StackPanel>
+            <Panel Name="Panel" HorizontalAlignment="Stretch">
+              <StackPanel x:DataType="history:HistoryItemViewModel"
+                          IsVisible="{Binding !!OutgoingAmount}"
+                          HorizontalAlignment="Right">
+                <PathIcon Data="{StaticResource arrow_up_right_regular}" Opacity="0.6">
+                  <i:Interaction.Behaviors>
+                    <ir:AdaptiveBehavior SourceControl="{Binding #Panel}" x:CompileBindings="False">
+                      <ir:AdaptiveClassSetter MinWidth="0" MaxWidth="120" ClassName="hidden"/>
+                    </ir:AdaptiveBehavior>
+                  </i:Interaction.Behaviors>
+                </PathIcon>
+                <TextBlock Classes="monoSpaced"
+                           Text="{Binding OutgoingAmount, Converter={x:Static converters:MoneyConverters.ToFormattedString}}" />
+              </StackPanel>
+            </Panel>
           </DataTemplate>
         </DataGridTemplateColumn.CellTemplate>
       </DataGridTemplateColumn>
 
       <!-- Balance -->
       <DataGridTemplateColumn Header="Balance (BTC)"
-                              Width="*"
+                              Width="Auto"
                               SortMemberPath="Balance">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
@@ -237,7 +273,9 @@
 
       <!-- Status -->
       <DataGridTemplateColumn Header="Status"
-                              Width="Auto"
+                              Width="*"
+                              MinWidth="100"
+                              MaxWidth="120"
                               SortMemberPath="IsConfirmed">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
@@ -246,20 +284,37 @@
               <StackPanel IsVisible="{Binding IsConfirmed}">
                 <PathIcon Data="{StaticResource checkmark_filled}"
                           Foreground="{DynamicResource SystemAccentColor}"
-                          Height="11" />
-                <TextBlock Classes="monoSpaced" Text="Confirmed" />
+                          Height="11"
+                          ToolTip.Tip="Confirmed"/>
+                <TextBlock Classes="monoSpaced" Text="Confirmed">
+                  <!--<i:Interaction.Behaviors>
+                    <ir:AdaptiveBehavior SourceControl="{Binding $parent[DataGrid]}" x:CompileBindings="False">
+                      <ir:AdaptiveClassSetter MinWidth="0" MaxWidth="940" ClassName="hidden"/>
+                      <ir:AdaptiveClassSetter MinWidth="940" MaxWidth="Infinity" ClassName="visible"/>
+                    </ir:AdaptiveBehavior>
+                  </i:Interaction.Behaviors>-->
+                </TextBlock>
               </StackPanel>
               <!-- Pending -->
               <StackPanel IsVisible="{Binding !IsConfirmed}">
-                <PathIcon Data="{StaticResource channel_regular}" Opacity="0.6" />
-                <TextBlock Classes="monoSpaced" Text="Pending" />
+                <PathIcon Data="{StaticResource channel_regular}"
+                          Opacity="0.6"
+                          ToolTip.Tip="Pending"/>
+                <TextBlock Classes="monoSpaced" Text="Pending">
+                  <!--<i:Interaction.Behaviors>
+                    <ir:AdaptiveBehavior SourceControl="{Binding $parent[DataGrid]}" x:CompileBindings="False">
+                      <ir:AdaptiveClassSetter MinWidth="0" MaxWidth="940" ClassName="hidden"/>
+                      <ir:AdaptiveClassSetter MinWidth="940" MaxWidth="Infinity" ClassName="visible"/>
+                    </ir:AdaptiveBehavior>
+                  </i:Interaction.Behaviors>-->
+                </TextBlock>
               </StackPanel>
             </Panel>
           </DataTemplate>
         </DataGridTemplateColumn.CellTemplate>
       </DataGridTemplateColumn>
 
-      <!-- Status -->
+      <!-- Details -->
       <DataGridTemplateColumn Width="Auto"
                               CanUserSort="False">
         <DataGridTemplateColumn.CellTemplate>

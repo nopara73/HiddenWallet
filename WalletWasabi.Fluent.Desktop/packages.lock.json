@@ -125,21 +125,21 @@
       },
       "Avalonia.Xaml.Behaviors": {
         "type": "Transitive",
-        "resolved": "0.10.6.7",
-        "contentHash": "MfYXMOXqzXsQTwBBTopRdn0X6i/Weg2GAY1IBqaWIJEvyhY7YOEGUsVil+qxcj9PhzoXiVFv7Vlh4mYUCRmnrw==",
+        "resolved": "0.10.6.10",
+        "contentHash": "1JPA+b1mMwRuTrGFQRnoCfm9iZSP4GkffSOVo0lG21wMm5LN2Hi/N89tGtWTt8idrFPsAIzLVAFCpycf40az1w==",
         "dependencies": {
           "Avalonia": "0.10.6",
-          "Avalonia.Xaml.Interactions": "0.10.6.7",
-          "Avalonia.Xaml.Interactivity": "0.10.6.7"
+          "Avalonia.Xaml.Interactions": "0.10.6.10",
+          "Avalonia.Xaml.Interactivity": "0.10.6.10"
         }
       },
       "Avalonia.Xaml.Interactions": {
         "type": "Transitive",
-        "resolved": "0.10.6.7",
-        "contentHash": "fcxRrrG5JZsY5j/bsx/pUgCBlSSGpASK0X1LLMO2bgDDns1Z32sldxpHHG8gnl2dXFOduCDcVj7ivMWI64s+yA==",
+        "resolved": "0.10.6.10",
+        "contentHash": "6zfiw6lZmOcZFiYwJggsJLFZAzTcM6me+qf3x/sTI2xf5WD2GPCaANlNjrQm0a9RKaK70AJAUd6nv5MPm6F0Gg==",
         "dependencies": {
           "Avalonia": "0.10.6",
-          "Avalonia.Xaml.Interactivity": "0.10.6.7"
+          "Avalonia.Xaml.Interactivity": "0.10.6.10"
         }
       },
       "Avalonia.Xaml.Interactions.Custom": {
@@ -153,8 +153,8 @@
       },
       "Avalonia.Xaml.Interactivity": {
         "type": "Transitive",
-        "resolved": "0.10.6.7",
-        "contentHash": "FLZAQZ2Th0P1IEFmXqInihlC03qUOmnG5qOfu1Qd1bKRB9BB0kO/QpjPgLVZ14DpnJutJ3/P5kbE17OcYMmy0g==",
+        "resolved": "0.10.6.10",
+        "contentHash": "3XY4bvWjbadUJKvlsvqfXKmMTVY4aqZr9zi1b/Su1amA3VTCQQiuKm7HUj9W/Q8qlJU9fdodCpr8Ihya74tmmQ==",
         "dependencies": {
           "Avalonia": "0.10.6"
         }
@@ -999,7 +999,7 @@
           "Avalonia": "0.10.999-cibuild0014678-beta",
           "Avalonia.Diagnostics": "0.10.999-cibuild0014678-beta",
           "Avalonia.ReactiveUI": "0.10.999-cibuild0014678-beta",
-          "Avalonia.Xaml.Behaviors": "0.10.6.7",
+          "Avalonia.Xaml.Behaviors": "0.10.6.10",
           "WalletWasabi": "1.0.0",
           "Wasabi Wallet": "1.0.0"
         }

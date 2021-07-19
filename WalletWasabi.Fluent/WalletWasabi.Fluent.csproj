@@ -19,7 +19,7 @@
 		<PackageReference Include="Avalonia" Version="0.10.999-cibuild0014678-beta" />
 		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.999-cibuild0014678-beta" />
 		<PackageReference Include="Avalonia.Diagnostics" Version="0.10.999-cibuild0014678-beta" />
-		<PackageReference Include="Avalonia.Xaml.Behaviors" Version="0.10.6.7" />
+		<PackageReference Include="Avalonia.Xaml.Behaviors" Version="0.10.6.10" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\WalletWasabi.Gui\WalletWasabi.Gui.csproj" />
