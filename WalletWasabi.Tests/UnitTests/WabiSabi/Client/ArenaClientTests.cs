@@ -191,11 +191,11 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Client
 			Round round = WabiSabiFactory.CreateRound(config);
 
 			using Key key1 = new();
-			Alice alice1 = WabiSabiFactory.CreateAlice(key: key1);
+			Alice alice1 = WabiSabiFactory.CreateAlice(key: key1, round: round);
 			round.Alices.Add(alice1);
 
 			using Key key2 = new();
-			Alice alice2 = WabiSabiFactory.CreateAlice(key: key2);
+			Alice alice2 = WabiSabiFactory.CreateAlice(key: key2, round: round);
 			round.Alices.Add(alice2);
 
 			using Arena arena = await WabiSabiFactory.CreateAndStartArenaAsync(config, round);
