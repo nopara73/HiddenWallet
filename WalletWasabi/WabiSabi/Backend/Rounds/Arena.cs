@@ -157,21 +157,30 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			// single coin.
 			using (await alice.AsyncLock.LockAsync().ConfigureAwait(false))
 			{
-				// TODO cleanup on subsequent error? it can't be removed by aliceid
-				if (!AlicesByOutpoint.TryAdd(coin.Outpoint, alice))
+				var otherAlice = AlicesByOutpoint.GetOrAdd(coin.Outpoint, alice);
+
+				if (otherAlice != alice)
 				{
-					throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.AliceAlreadyRegistered);
+					throw new WabiSabiProtocolException(WabiSabiProtocolErrorCode.AliceAlreadyRegistered, $"The coin {coin.Outpoint} is already registered into round {otherAlice.Round.Id}.");
 				}
 
-				var response = await round.RegisterInputAsync(alice, request, Config);
-
-				// Now that alice is in the round, make it available by id.
-				if (!AlicesById.TryAdd(alice.Id, alice))
+				try
 				{
-					throw new InvalidOperationException();
-				}
+					var response = await round.RegisterInputAsync(alice, request, Config);
 
-				return response;
+					// Now that alice is in the round, make it available by id.
+					if (!AlicesById.TryAdd(alice.Id, alice))
+					{
+						throw new InvalidOperationException();
+					}
+
+					return response;
+				}
+				catch (Exception ex)
+				{
+					AlicesByOutpoint.Remove(coin.Outpoint, out _);
+					throw ex;
+				}
 			}
 		}
 
