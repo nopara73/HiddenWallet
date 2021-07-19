@@ -71,6 +71,18 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				await round.StepAsync(this, cancel);
 
 				cancel.ThrowIfCancellationRequested();
+
+				if (round.Phase != Phase.Ended)
+				{
+					// FIXME remove, hack to make alices injected by tests accessible from requests
+					foreach (var kvp in round.AlicesById.Where(kvp => !AlicesById.Contains(kvp)))
+					{
+						if (!AlicesByOutpoint.TryAdd(kvp.Value.Coin.Outpoint, kvp.Value) || !AlicesById.TryAdd(kvp.Key, kvp.Value))
+						{
+							throw new InvalidOperationException();
+						}
+					}
+				}
 			}
 
 			// Ensure there's at least one non-blame round in input registration.
