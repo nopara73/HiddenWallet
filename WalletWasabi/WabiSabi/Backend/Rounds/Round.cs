@@ -163,7 +163,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				.Append(ProtocolConstants.RoundFeeRateStrobeLabel, FeeRate.FeePerK)
 				.GetHash();
 
-		public async Task TimeoutAliceAsync(Alice alice, CancellationToken cancel)
+		public async Task TimeoutAliceAsync(Alice alice, Arena arena, CancellationToken cancel)
 		{
 			using (await AsyncLock.LockAsync(cancel).ConfigureAwait(false))
 			{
@@ -173,6 +173,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				if (Phase == Phase.InputRegistration && alice.Deadline < DateTimeOffset.UtcNow)
 				{
 					AlicesById.Remove(alice.Id, out _);
+					arena.RemoveAlice(alice);
 					this.LogInfo($"Alice {alice.Id} timed out and removed.");
 				}
 			}
@@ -300,6 +301,11 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				.Select(x => x.Alice)
 				.ToHashSet();
 
+			foreach (var alice in AlicesById.Select(x => x.Value))
+			{
+				arena.RemoveAlice(alice);
+			}
+
 			foreach (var alice in alicesWhoDidntSign)
 			{
 				arena.Prison.Note(alice, Id);
@@ -426,7 +432,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 					   commitVsizeCredentialResponse.Commit());
 		}
 
-		public async Task RemoveInputAsync(Alice alice, InputsRemovalRequest request)
+		public async Task RemoveInputAsync(Alice alice, Arena arena, InputsRemovalRequest request)
 		{
 			using (await AsyncLock.LockAsync().ConfigureAwait(false))
 			{
@@ -439,6 +445,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				// to other participants, so AliceId can only be known to
 				// its owner.
 				AlicesById.Remove(alice.Id, out _);
+				arena.RemoveAlice(alice);
 			}
 		}
 

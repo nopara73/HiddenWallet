@@ -54,6 +54,12 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			}
 		}
 
+		public void RemoveAlice(Alice alice)
+		{
+			AlicesById.Remove(alice.Id, out _);
+			AlicesByOutpoint.Remove(alice.Coin.Outpoint, out _);
+		}
+
 		protected override async Task ActionAsync(CancellationToken cancel)
 		{
 			TimeoutRounds();
@@ -98,14 +104,14 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 		// that terminates when alice is confirmed or removed
 		private async Task TimeoutAlicesAsync(CancellationToken cancel)
 		{
-			foreach (var alice in AlicesById.Select(x => x.Value))
+			foreach (var alice in AlicesById.Values)
 			{
 				// TODO remove when alice.Round is no longer nullable
 				if (alice.Round is Round round)
 				{
 					using (await alice.AsyncLock.LockAsync(cancel).ConfigureAwait(false))
 					{
-						await alice.Round.TimeoutAliceAsync(alice, cancel);
+						await alice.Round.TimeoutAliceAsync(alice, this, cancel);
 					}
 				}
 			}
