@@ -74,7 +74,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Backend.PhaseStepping
 			{
 				MaxInputCountByRound = 2,
 				MinInputCountByRoundMultiplier = 0.5,
-				OutputRegistrationTimeout = TimeSpan.Zero
+				OutputRegistrationTimeout = TimeSpan.FromSeconds(10)
 			};
 			using Key key1 = new();
 			using Key key2 = new();
@@ -97,6 +97,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Backend.PhaseStepping
 				vsizeCredentials1.Take(ProtocolConstants.CredentialNumber),
 				CancellationToken.None);
 
+			await Task.Delay(TimeSpan.FromSeconds(10));
 			await arena.TriggerAndWaitRoundAsync(TimeSpan.FromSeconds(21));
 			Assert.Equal(Phase.TransactionSigning, round.Phase);
 			var tx = round.Assert<SigningState>().CreateTransaction();
@@ -114,7 +115,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Backend.PhaseStepping
 			{
 				MaxInputCountByRound = 2,
 				MinInputCountByRoundMultiplier = 0.5,
-				OutputRegistrationTimeout = TimeSpan.Zero
+				OutputRegistrationTimeout = TimeSpan.FromSeconds(10),
 			};
 			using Key key1 = new();
 			using Key key2 = new();
@@ -153,6 +154,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Backend.PhaseStepping
 			round.Alices.Add(extraAlice);
 			round.CoinjoinState = round.Assert<ConstructionState>().AddInput(extraAlice.Coin);
 
+			await Task.Delay(TimeSpan.FromSeconds(10));
 			await arena.TriggerAndWaitRoundAsync(TimeSpan.FromSeconds(21));
 			Assert.Equal(Phase.TransactionSigning, round.Phase);
 			var tx = round.Assert<SigningState>().CreateTransaction();
