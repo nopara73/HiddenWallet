@@ -88,6 +88,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				_ => throw new InvalidOperationException($"{typeof(TState).Name} state was expected but {CoinjoinState.GetType().Name} state was received.")
 			};
 
+		// TODO private, needs holding of async lock to be safe
 		public void SetPhase(Phase phase)
 		{
 			if (!Enum.IsDefined<Phase>(phase))
@@ -143,6 +144,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			return false;
 		}
 
+		// TODO remove only used in tests
 		public ConstructionState AddInput(Coin coin)
 			=> Assert<ConstructionState>().AddInput(coin);
 
