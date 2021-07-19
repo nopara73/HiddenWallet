@@ -381,7 +381,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			}
 		}
 
-		public async Task<OutputRegistrationResponse> RegisterOutputAsync(OutputRegistrationRequest request)
+		public async Task RegisterOutputAsync(OutputRegistrationRequest request)
 		{
 			using (await AsyncLock.LockAsync().ConfigureAwait(false))
 			{
@@ -419,9 +419,8 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 				round.CoinjoinState = newState;
 
 				// Issue credentials and mark presented credentials as used.
-				return new(
-					commitAmountCredentialResponse.Commit(),
-					commitVsizeCredentialResponse.Commit());
+				commitAmountCredentialResponse.Commit();
+				commitVsizeCredentialResponse.Commit();
 			}
 		}
 
