@@ -175,10 +175,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 					var response = await round.RegisterInputAsync(alice, request, Config);
 
 					// Now that alice is in the round, make it available by id.
-					if (!AlicesById.TryAdd(alice.Id, alice))
-					{
-						throw new InvalidOperationException();
-					}
+					(AlicesById as IDictionary<uint256, Alice>).Add(alice.Id, alice);
 
 					return response;
 				}
