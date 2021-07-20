@@ -18,7 +18,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Backend
 		public async Task AliceTimesoutAsync()
 		{
 			// Alice times out when its deadline is reached.
-			WabiSabiConfig cfg = new();
+			WabiSabiConfig cfg = new() { ConnectionConfirmationTimeout = TimeSpan.FromSeconds(5) };
 			var round = WabiSabiFactory.CreateRound(cfg);
 			using Key key = new();
 			var coin = WabiSabiFactory.CreateCoin(key);
@@ -33,8 +33,8 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Backend
 			await aliceClient.RegisterInputAsync(CancellationToken.None);
 
 			var alice = Assert.Single(round.Alices);
-			alice.Deadline = DateTimeOffset.UtcNow - TimeSpan.FromMilliseconds(1);
-			await arena.TriggerAndWaitRoundAsync(TimeSpan.FromSeconds(21));
+
+			await Task.Delay(TimeSpan.FromSeconds(10));
 			Assert.Empty(round.Alices);
 
 			await arena.StopAsync(CancellationToken.None);

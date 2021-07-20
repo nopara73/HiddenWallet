@@ -57,13 +57,12 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 		{
 			AlicesById.Remove(alice.Id, out _);
 			AlicesByOutpoint.Remove(alice.Coin.Outpoint, out _);
+			alice.Dispose();
 		}
 
 		protected override async Task ActionAsync(CancellationToken cancel)
 		{
 			TimeoutRounds();
-
-			await TimeoutAlicesAsync(cancel);
 
 			foreach (var round in RoundsById.Select(x => x.Value))
 			{
@@ -96,23 +95,6 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 						 && x.End + Config.RoundExpiryTimeout < DateTimeOffset.UtcNow).ToArray())
 			{
 				RemoveRound(expiredRound);
-			}
-		}
-
-		// TODO make alice time itself out by running its own background task
-		// that terminates when alice is confirmed or removed
-		private async Task TimeoutAlicesAsync(CancellationToken cancel)
-		{
-			foreach (var alice in AlicesById.Values)
-			{
-				// TODO remove when alice.Round is no longer nullable
-				if (alice.Round is Round round)
-				{
-					using (await alice.AsyncLock.LockAsync(cancel).ConfigureAwait(false))
-					{
-						await alice.Round.TimeoutAliceAsync(alice, this, cancel);
-					}
-				}
 			}
 		}
 
@@ -176,6 +158,9 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 					// Now that alice is in the round, make it available by id.
 					(AlicesById as IDictionary<uint256, Alice>).Add(alice.Id, alice);
+
+					// TODO start automatically? needs Deadline to be set at construction
+					alice.StartTimeoutAsync(this);
 
 					return response;
 				}
