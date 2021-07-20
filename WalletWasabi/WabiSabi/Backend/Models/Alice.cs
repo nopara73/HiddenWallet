@@ -18,15 +18,7 @@ namespace WalletWasabi.WabiSabi.Backend.Models
 			Id = CalculateHash();
 		}
 
-		[Obsolete("alice now requires a Round property")]
-		public Alice(Coin coin, OwnershipProof ownershipProof)
-		{
-			Coin = coin;
-			OwnershipProof = ownershipProof;
-			Id = CalculateHash();
-		}
-
-		public Round? Round { get; } // TODO make non-nullable, required because tests have it null
+		public Round Round { get; }
 		public AsyncLock AsyncLock { get; } = new();
 
 		public uint256 Id { get; }
