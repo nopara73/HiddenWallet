@@ -162,19 +162,17 @@ namespace WalletWasabi.WabiSabi.Crypto
 			// also be rejected. Since serial numbers are cryptographically
 			// unguessable, we just add them, any reuse is necessarily a double
 			// spend attempt.
-			var serialNumberUnused = presentedSerialNumbers.OrderBy(s => s.GetHashCode()).Select(s => SerialNumbers.TryAdd(s, true)).ToImmutableArray();
-			if (serialNumberUnused.Any(unused => !unused))
+			var unusedSerialNumbers = presentedSerialNumbers.OrderBy(s => s.GetHashCode()).Where(s => SerialNumbers.TryAdd(s, true)).ToImmutableArray();
+
+			if (unusedSerialNumbers.Length != presented.Count())
 			{
 				// Clean up any serial numbers that were unused prior to TryAdd,
 				// since they may be invalid so otherwise they could be used to
 				// clog the nullifier set. We only need to keep serial numbers
 				// associated with valid MACs.
-				foreach (var (serial, unused) in Enumerable.Zip(presentedSerialNumbers, serialNumberUnused))
+				foreach (var serial in unusedSerialNumbers)
 				{
-					if (unused)
-					{
-						SerialNumbers.Remove(serial, out _);
-					}
+					SerialNumbers.Remove(serial, out _);
 				}
 
 				throw new WabiSabiCryptoException(WabiSabiCryptoErrorCode.SerialNumberAlreadyUsed, $"Serial number reused");
