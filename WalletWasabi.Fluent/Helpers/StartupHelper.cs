@@ -2,6 +2,7 @@ using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using WalletWasabi.Helpers;
 
 namespace WalletWasabi.Fluent.Helpers
@@ -10,7 +11,13 @@ namespace WalletWasabi.Fluent.Helpers
 	{
 		private const string KeyPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 
-		public static void ModifyStartupSetting(bool runOnSystemStartup)
+		// Arguments to add Wasabi to macOS startup settings.
+		private static readonly string AddCmd = $"osascript -e \' tell application \"System Events\" to make new login item at end with properties {{name:\"{Constants.AppName}\", path:\"/Applications/{Constants.AppName}.app\", hidden:true}} \'";
+
+		// Arguments to delete Wasabi from macOS startup settings.
+		private static readonly string DeleteCmd = $"osascript -e \' tell application \"System Events\" to delete login item \"{Constants.AppName}\" \'";
+
+		public static async Task ModifyStartupSettingAsync(bool runOnSystemStartup)
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
@@ -19,7 +26,7 @@ namespace WalletWasabi.Fluent.Helpers
 				{
 					throw new InvalidOperationException($"Path {pathToExeFile} does not exist.");
 				}
-				ModifyRegistry(runOnSystemStartup, pathToExeFile);
+				StartOnWindowsStartup(runOnSystemStartup, pathToExeFile);
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 			{
@@ -27,11 +34,18 @@ namespace WalletWasabi.Fluent.Helpers
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 			{
-				throw new NotImplementedException();
+				if (runOnSystemStartup)
+				{
+					await EnvironmentHelpers.ShellExecAsync(AddCmd).ConfigureAwait(false);
+				}
+				else
+				{
+					await EnvironmentHelpers.ShellExecAsync(DeleteCmd).ConfigureAwait(false);
+				}
 			}
 		}
 
-		private static void ModifyRegistry(bool runOnSystemStartup, string pathToExeFile)
+		private static void StartOnWindowsStartup(bool runOnSystemStartup, string pathToExeFile)
 		{
 			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{

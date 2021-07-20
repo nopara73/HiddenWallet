@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using WalletWasabi.Fluent.Helpers;
 using Xunit;
 
@@ -8,22 +9,22 @@ namespace WalletWasabi.Tests.UnitTests
 	public class StartWasabiOnSystemStartupTests
 	{
 		[Fact]
-		public void ModifyStartupOnDifferentSystemsTest()
+		public async Task ModifyStartupOnDifferentSystemsTestAsync()
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				StartupHelper.ModifyStartupSetting(true);
-				StartupHelper.ModifyStartupSetting(false);
+				await StartupHelper.ModifyStartupSettingAsync(true);
+				await StartupHelper.ModifyStartupSettingAsync(false);
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 			{
-				Assert.Throws<NotImplementedException>(() => StartupHelper.ModifyStartupSetting(true));
-				Assert.Throws<NotImplementedException>(() => StartupHelper.ModifyStartupSetting(false));
+				await Assert.ThrowsAsync<NotImplementedException>(async () => await StartupHelper.ModifyStartupSettingAsync(true));
+				await Assert.ThrowsAsync<NotImplementedException>(async () => await StartupHelper.ModifyStartupSettingAsync(false));
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 			{
-				Assert.Throws<NotImplementedException>(() => StartupHelper.ModifyStartupSetting(true));
-				Assert.Throws<NotImplementedException>(() => StartupHelper.ModifyStartupSetting(false));
+				await StartupHelper.ModifyStartupSettingAsync(true);
+				await StartupHelper.ModifyStartupSettingAsync(false);
 			}
 		}
 	}

@@ -56,13 +56,13 @@ namespace WalletWasabi.Fluent.ViewModels.Settings
 				.Subscribe(x => Services.UiConfig.Autocopy = x);
 
 			this.WhenAnyValue(x => x.RunOnSystemStartup)
-				.ObserveOn(RxApp.TaskpoolScheduler)
+				.ObserveOn(RxApp.MainThreadScheduler)
 				.Skip(1)
 				.Subscribe(async runOnStartup =>
 				{
 					try
 					{
-						StartupHelper.ModifyStartupSetting(runOnStartup);
+						await StartupHelper.ModifyStartupSettingAsync(runOnStartup);
 						Services.UiConfig.RunOnSystemStartup = runOnStartup;
 					}
 					catch (Exception ex)
