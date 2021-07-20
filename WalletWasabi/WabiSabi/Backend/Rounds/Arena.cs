@@ -49,8 +49,7 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 			foreach (var alice in AlicesById.Values.Where(alice => alice.Round == round))
 			{
-				AlicesById.Remove(alice.Id, out _);
-				AlicesByOutpoint.Remove(alice.Coin.Outpoint, out _);
+				RemoveAlice(alice);
 			}
 		}
 
@@ -129,7 +128,8 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 			// Ensure there is always a round accepting inputs
 			if (!RoundsById.Select(x => x.Value).Any(x => !x.IsBlameRound && x.Phase == Phase.InputRegistration))
 			{
-				var feeRate = (await Rpc.EstimateSmartFeeAsync((int)Config.ConfirmationTarget, EstimateSmartFeeMode.Conservative, simulateIfRegTest: true).ConfigureAwait(false)).FeeRate;
+				var smartFeeEstimation = await Rpc.EstimateSmartFeeAsync((int)Config.ConfirmationTarget, EstimateSmartFeeMode.Conservative, simulateIfRegTest: true).ConfigureAwait(false);
+				var feeRate = smartFeeEstimation.FeeRate;
 				RoundParameters roundParams = new(Config, Network, Random, feeRate);
 				await AddRound(new(roundParams), cancel);
 			}
@@ -182,10 +182,10 @@ namespace WalletWasabi.WabiSabi.Backend.Rounds
 
 					return response;
 				}
-				catch (Exception ex)
+				catch
 				{
 					AlicesByOutpoint.Remove(coin.Outpoint, out _);
-					throw ex;
+					throw;
 				}
 			}
 		}
