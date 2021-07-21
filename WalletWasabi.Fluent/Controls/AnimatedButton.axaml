@@ -59,6 +59,7 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <Button Name="PART_Button"
+                        Focusable="{TemplateBinding Focusable}"
                         Command="{TemplateBinding Command}"
                         CommandParameter="{TemplateBinding CommandParameter}"
                         Classes="plain">
