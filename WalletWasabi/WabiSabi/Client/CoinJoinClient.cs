@@ -122,6 +122,12 @@ namespace WalletWasabi.WabiSabi.Client
 
 			var finalRoundState = await RoundStatusUpdater.CreateRoundAwaiter(s => s.Id == roundState.Id && s.Phase == Phase.Ended, cancellationToken).ConfigureAwait(false);
 
+			if (finalRoundState.CoinjoinState is SigningState state && state.IsFullySigned)
+			{
+				// TODO cancellation token? broadcast ourselves?
+				finalRoundState = await RoundStatusUpdater.CreateRoundAwaiter(s => s.Id == roundState.Id && s.WasTransactionBroadcast, cancellationToken).ConfigureAwait(false);
+			}
+
 			return finalRoundState.WasTransactionBroadcast;
 		}
 
