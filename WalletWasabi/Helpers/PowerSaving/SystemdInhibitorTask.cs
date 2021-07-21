@@ -88,6 +88,8 @@ namespace WalletWasabi.Helpers.PowerSaving
 
 				// Process cannot stop on its own so we know it is actually running.
 				Process.Kill();
+
+				Logger.LogWarning($"XXX: systemd-inhibit task was killed.");
 			}
 			finally
 			{
@@ -100,6 +102,7 @@ namespace WalletWasabi.Helpers.PowerSaving
 				}
 
 				Logger.LogTrace("systemd-inhibit task is finished.");
+				Logger.LogWarning($"XXX: systemd-inhibit task is finished.");
 			}
 		}
 
@@ -131,6 +134,7 @@ namespace WalletWasabi.Helpers.PowerSaving
 			}
 			finally
 			{
+				Logger.LogWarning($"XXX: {logMessage}");
 				Logger.LogTrace(logMessage);
 			}
 		}
@@ -180,6 +184,8 @@ namespace WalletWasabi.Helpers.PowerSaving
 			// Make sure that the systemd-inhibit is terminated once the parent process (WW) finishes.
 			string innerCommand = $"tail --pid={Environment.ProcessId} -f /dev/null";
 			string shellCommand = $"systemd-inhibit --why='{reason}' --what='{whatArgument}' --mode=block {innerCommand}";
+
+			Logger.LogWarning($"XXX: shell command to invoke: {shellCommand}");
 
 			ProcessStartInfo processStartInfo = EnvironmentHelpers.GetShellProcessStartInfo(shellCommand);
 			ProcessAsync process = new(processStartInfo);

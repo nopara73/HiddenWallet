@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WalletWasabi.Bases;
 using WalletWasabi.Helpers;
 using WalletWasabi.Helpers.PowerSaving;
+using WalletWasabi.Logging;
 using WalletWasabi.Wallets;
 using static WalletWasabi.Helpers.PowerSaving.SystemdInhibitorTask;
 
@@ -30,14 +31,18 @@ namespace WalletWasabi.Services
 
 			if (WalletManager.AnyCoinJoinInProgress())
 			{
+				Logger.LogWarning($"XXX: CJ is in progress, make sure to prolong awake state.");
+
 				if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 				{					
 					if (task is not null)
 					{
+						Logger.LogWarning($"XXX: Prolong power saving prevention task by one minute.");
 						task.Prolong(TimeSpan.FromMinutes(1));
 					}
 					else
 					{
+						Logger.LogWarning($"XXX: Create new power saving prevention task.");
 						_powerSavingTask = SystemdInhibitorTask.Create(InhibitWhat.All, Timeout, Reason);
 					}
 				}
@@ -50,6 +55,7 @@ namespace WalletWasabi.Services
 			{
 				if (task is not null)
 				{
+					Logger.LogWarning($"XXX: Stop task.");
 					await task.StopAsync().ConfigureAwait(false);
 				}
 			}			
