@@ -249,7 +249,7 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 			{
 				var rpc = node.RpcClient;
 
-				var httpClient = _apiApplicationFactory.WithWebHostBuilder(builder =>
+				var app = _apiApplicationFactory.WithWebHostBuilder(builder =>
 				{
 					builder.ConfigureServices(services =>
 					{
@@ -264,17 +264,14 @@ namespace WalletWasabi.Tests.UnitTests.WabiSabi.Integration
 							OutputRegistrationTimeout = TimeSpan.FromSeconds(20 * ExpectedInputNumber),
 						});
 					});
-				}).CreateClient();
-
-				// Create the API client
-				var apiClient = _apiApplicationFactory.CreateWabiSabiHttpApiClient(httpClient);
+				});
 
 				// Total test timeout.
 				using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20 * ExpectedInputNumber));
 
 				var participants = Enumerable
 					.Range(0, NumberOfParticipants)
-					.Select(_ => new Participant(rpc, apiClient))
+					.Select(_ => new Participant(rpc, _apiApplicationFactory.CreateWabiSabiHttpApiClient(app.CreateClient())))
 					.ToArray();
 
 				foreach (var participant in participants)
