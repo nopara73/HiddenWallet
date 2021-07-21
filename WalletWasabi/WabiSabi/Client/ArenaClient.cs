@@ -63,7 +63,7 @@ namespace WalletWasabi.WabiSabi.Client
 			await RequestHandler.RemoveInputAsync(new InputsRemovalRequest(roundId, aliceId), cancellationToken).ConfigureAwait(false);
 		}
 
-		public async Task<ArenaResponse> RegisterOutputAsync(
+		public async Task RegisterOutputAsync(
 			uint256 roundId,
 			long amount,
 			Script scriptPubKey,
@@ -86,18 +86,13 @@ namespace WalletWasabi.WabiSabi.Client
 				vsizeCredentialsToPresent,
 				cancellationToken);
 
-			var outputRegistrationResponse = await RequestHandler.RegisterOutputAsync(
+			await RequestHandler.RegisterOutputAsync(
 				new OutputRegistrationRequest(
 					roundId,
 					scriptPubKey,
 					realAmountCredentialRequest,
 					realVsizeCredentialRequest),
 				cancellationToken).ConfigureAwait(false);
-
-			var realAmountCredentials = AmountCredentialClient.HandleResponse(outputRegistrationResponse.AmountCredentials, realAmountCredentialResponseValidation);
-			var realVsizeCredentials = VsizeCredentialClient.HandleResponse(outputRegistrationResponse.VsizeCredentials, realVsizeCredentialResponseValidation);
-
-			return new(realAmountCredentials, realVsizeCredentials);
 		}
 
 		public async Task<ArenaResponse> ReissueCredentialAsync(
