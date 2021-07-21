@@ -5,6 +5,18 @@
     <Color x:Key="LineChartAreaGradientEndStopColor">#0078A827</Color>
     <Color x:Key="LineChartLineColor">#78A827</Color>
 
+    <Color x:Key="SliderTrackValueFill">#8093AE</Color>
+    <Color x:Key="SliderTrackValueFillPointerOver">#8093AE</Color>
+    <Color x:Key="SliderTrackValueFillPressed">#8093AE</Color>
+    <Color x:Key="SliderThumbBackground">#8093AE</Color>
+    <Color x:Key="SliderThumbBackgroundPointerOver">#8093AE</Color>
+    <Color x:Key="SliderThumbBackgroundPressed">#8093AE</Color>
+    <Color x:Key="SliderThumbBorderBrushPointerOver">#414F67</Color>
+
+    <Color x:Key="SliderTrackFill">#344359</Color>
+    <Color x:Key="SliderTrackFillPointerOver">#344359</Color>
+    <Color x:Key="SliderTrackFillPressed">#344359</Color>
+
     <SolidColorBrush x:Key="TextControlBackground">#1A8093AE</SolidColorBrush>
     <SolidColorBrush x:Key="TextControlBackgroundFocused">#1A8093AE</SolidColorBrush>
     <SolidColorBrush x:Key="TextControlBackgroundPointerOver">#1A8093AE</SolidColorBrush>

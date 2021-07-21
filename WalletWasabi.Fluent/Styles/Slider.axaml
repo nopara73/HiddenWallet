@@ -1,0 +1,22 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Slider /template/ Thumb:pointerover">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource SliderThumbBorderBrushPointerOver}" />
+  </Style>
+  <Style Selector="Slider /template/ Thumb">
+    <Setter Property="Transitions">
+      <Transitions>
+        <ThicknessTransition Property="BorderThickness"
+                             Duration="0:0:.175"
+                             Easing="{StaticResource FluentEasing}" />
+        <TransformOperationsTransition Property="RenderTransform"
+                                       Duration="0:0:.135"
+                                       Easing="{StaticResource FluentEasing}" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Slider:pressed /template/ Thumb">
+    <Setter Property="RenderTransform" Value="scaleX(0.9) scaleY(0.9)" />
+  </Style>
+</Styles>

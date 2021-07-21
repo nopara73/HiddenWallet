@@ -6,6 +6,18 @@
     <Color x:Key="LineChartAreaGradientCursorStrokeColor">#F078A827</Color>
     <Color x:Key="LineChartLineColor">#78A827</Color>
 
+    <Color x:Key="SliderTrackValueFill">#0B2545</Color>
+    <Color x:Key="SliderTrackValueFillPointerOver">#0B2545</Color>
+    <Color x:Key="SliderTrackValueFillPressed">#0B2545</Color>
+    <Color x:Key="SliderThumbBackground">#0B2545</Color>
+    <Color x:Key="SliderThumbBackgroundPointerOver">#0B2545</Color>
+    <Color x:Key="SliderThumbBackgroundPressed">#0B2545</Color>
+    <Color x:Key="SliderThumbBorderBrushPointerOver">#8093AE</Color>
+
+    <Color x:Key="SliderTrackFill">#BEC7D6</Color>
+    <Color x:Key="SliderTrackFillPointerOver">#BEC7D6</Color>
+    <Color x:Key="SliderTrackFillPressed">#BEC7D6</Color>
+
     <Color x:Key="TextControlBackground">#EFEFEF</Color>
     <Color x:Key="TextControlBackgroundFocused">#EFEFEF</Color>
     <Color x:Key="TextControlBackgroundPointerOver">#EFEFEF</Color>
