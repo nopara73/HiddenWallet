@@ -5,6 +5,7 @@ namespace WalletWasabi.Fluent.Models
 		Loading,
 		Ready,
 		CriticalUpdateAvailable,
-		UpdateAvailable
+		UpdateAvailable,
+		ConnectionIssueDetected
 	}
 }

@@ -38,7 +38,19 @@
         <StackPanel TextBlock.Foreground="{DynamicResource TextControlForeground}"
                     TextBlock.FontSize="14"
                     MaxWidth="160"
-                    ClipToBounds="False">
+                    ClipToBounds="False"
+                    Spacing="16">
+
+          <!-- Warning message TODO: use InfoMessage control-->
+          <DockPanel
+            IsVisible="{Binding CurrentState, Converter={x:Static converters:StatusBarStateVisibilityConverter.Instance}, ConverterParameter={x:Static models:StatusBarState.ConnectionIssueDetected}}">
+            <PathIcon Data="{StaticResource info_regular}"
+                      DockPanel.Dock="Top"
+                      HorizontalAlignment="Center"
+                      Height="30" />
+            <TextBlock DockPanel.Dock="Bottom" Text="Due to Wasabi unable to connect to the server, some features can be unavailable, your balance can be incorrect. Don't worry, we keep trying to connect." TextWrapping="Wrap"
+                       TextAlignment="Center" />
+          </DockPanel>
 
           <!-- Status -->
           <StackPanel Spacing="16">
@@ -66,7 +78,7 @@
               </MultiBinding>
             </StackPanel.IsVisible>
 
-            <Separator Margin="-12 16 -12 6" />
+            <Separator Margin="-12 0 -12 6" />
 
             <c:StatusItem Icon="{StaticResource arrow_clockwise_regular}"
                           Title="Update available"
@@ -94,9 +106,9 @@
     <!-- Update available -->
     <StackPanel Spacing="10" Orientation="Horizontal" VerticalAlignment="Center" Margin="10 0"
                 IsVisible="{Binding CurrentState, Converter={x:Static converters:StatusBarStateVisibilityConverter.Instance}, ConverterParameter={x:Static models:StatusBarState.UpdateAvailable}}">
-      <TextBlock Text="Update available" VerticalAlignment="Center" FontSize="14" Foreground="Gold" />
+      <TextBlock Text="Update available" VerticalAlignment="Center" FontSize="14" Foreground="Goldenrod" />
       <PathIcon Data="{StaticResource arrow_clockwise_with_elipse}"
-                Foreground="Gold"
+                Foreground="Goldenrod"
                 Height="30" />
     </StackPanel>
 
@@ -117,6 +129,14 @@
               Margin="10 0"
               IsVisible="{Binding CurrentState, Converter={x:Static converters:StatusBarStateVisibilityConverter.Instance}, ConverterParameter={x:Static models:StatusBarState.Ready}}" />
 
+    <!-- Connection issue -->
+    <PathIcon Data="{StaticResource warning_filled}"
+              Foreground="Gold"
+              VerticalAlignment="Center" HorizontalAlignment="Right"
+              Height="30"
+              Margin="10 0"
+              IsVisible="{Binding CurrentState, Converter={x:Static converters:StatusBarStateVisibilityConverter.Instance}, ConverterParameter={x:Static models:StatusBarState.ConnectionIssueDetected}}" />
+
     <!-- Loading -->
     <PathIcon Data="{StaticResource arrow_sync_regular}"
               Foreground="{StaticResource SystemAccentColor}"
@@ -125,5 +145,6 @@
               Margin="10 0"
               IsVisible="{Binding CurrentState, Converter={x:Static converters:StatusBarStateVisibilityConverter.Instance}, ConverterParameter={x:Static models:StatusBarState.Loading}}"
               Classes="rotate" />
+
   </Panel>
 </UserControl>

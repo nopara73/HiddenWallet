@@ -81,7 +81,7 @@ namespace WalletWasabi.Fluent.ViewModels
 					wallet =>
 				{
 					WalletViewModelBase vm = (wallet.State <= WalletState.Starting)
-						? ClosedWalletViewModel.Create(this, wallet)
+						? ClosedWalletViewModel.Create(wallet)
 						: WalletViewModel.Create(wallet);
 
 					InsertWallet(vm);
@@ -133,10 +133,8 @@ namespace WalletWasabi.Fluent.ViewModels
 			throw new Exception("Wallet not found, invalid api usage");
 		}
 
-		public async Task LoadWalletAsync(ClosedWalletViewModel closedWalletViewModel)
+		public async Task LoadWalletAsync(Wallet wallet)
 		{
-			var wallet = closedWalletViewModel.Wallet;
-
 			if (wallet.State != WalletState.Uninitialized)
 			{
 				throw new Exception("Wallet is already being logged in.");
@@ -204,7 +202,7 @@ namespace WalletWasabi.Fluent.ViewModels
 		{
 			foreach (var wallet in Services.WalletManager.GetWallets())
 			{
-				InsertWallet(ClosedWalletViewModel.Create(this, wallet));
+				InsertWallet(ClosedWalletViewModel.Create(wallet));
 			}
 		}
 

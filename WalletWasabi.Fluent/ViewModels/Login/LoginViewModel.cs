@@ -19,7 +19,7 @@ namespace WalletWasabi.Fluent.ViewModels.Login
 		[AutoNotify] private bool _isPasswordNeeded;
 		[AutoNotify] private string _errorMessage;
 
-		public LoginViewModel(WalletManagerViewModel walletManagerViewModel, ClosedWalletViewModel closedWalletViewModel)
+		public LoginViewModel(ClosedWalletViewModel closedWalletViewModel)
 		{
 			var wallet = closedWalletViewModel.Wallet;
 			IsPasswordNeeded = !wallet.KeyManager.IsWatchOnly;
@@ -28,7 +28,7 @@ namespace WalletWasabi.Fluent.ViewModels.Login
 			_errorMessage = "";
 			WalletType = WalletHelpers.GetType(closedWalletViewModel.Wallet.KeyManager);
 
-			NextCommand = ReactiveCommand.CreateFromTask(async () => await OnNextAsync(walletManagerViewModel, closedWalletViewModel, wallet));
+			NextCommand = ReactiveCommand.CreateFromTask(async () => await OnNextAsync(closedWalletViewModel, wallet));
 
 			OkCommand = ReactiveCommand.Create(OnOk);
 
@@ -45,7 +45,7 @@ namespace WalletWasabi.Fluent.ViewModels.Login
 
 		public ICommand ForgotPasswordCommand { get; }
 
-		private async Task OnNextAsync(WalletManagerViewModel walletManagerViewModel, ClosedWalletViewModel closedWalletViewModel, Wallet wallet)
+		private async Task OnNextAsync(ClosedWalletViewModel closedWalletViewModel, Wallet wallet)
 		{
 			string? compatibilityPasswordUsed = null;
 
@@ -66,7 +66,7 @@ namespace WalletWasabi.Fluent.ViewModels.Login
 
 			if (legalResult)
 			{
-				LoginWallet(walletManagerViewModel, closedWalletViewModel);
+				LoginWallet(closedWalletViewModel);
 			}
 			else
 			{
@@ -86,10 +86,9 @@ namespace WalletWasabi.Fluent.ViewModels.Login
 			Navigate(NavigationTarget.DialogScreen).To(new PasswordFinderIntroduceViewModel(wallet));
 		}
 
-		private void LoginWallet(WalletManagerViewModel walletManagerViewModel, ClosedWalletViewModel closedWalletViewModel)
+		private void LoginWallet(ClosedWalletViewModel closedWalletViewModel)
 		{
 			closedWalletViewModel.RaisePropertyChanged(nameof(WalletViewModelBase.IsLoggedIn));
-			RxApp.MainThreadScheduler.Schedule(async () => await walletManagerViewModel.LoadWalletAsync(closedWalletViewModel));
 			Navigate().To(closedWalletViewModel, NavigationMode.Clear);
 		}
 
