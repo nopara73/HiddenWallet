@@ -73,11 +73,12 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Receive
 
 			EnableBack = false;
 
-			NextCommand = ReactiveCommand.Create(OnNext, _labels.ToObservableChangeSet()
-				.Select(_ => _labels.Count > 0));
+			NextCommand = ReactiveCommand.Create(OnNext, _labels.ToObservableChangeSet().Select(_ => _labels.Count > 0));
 
 			ShowExistingAddressesCommand = ReactiveCommand.Create(OnShowExistingAddresses);
 		}
+
+		public ICommand ShowExistingAddressesCommand { get; }
 
 		public ObservableCollection<SuggestionLabelViewModel> SuggestionLabelResults => _suggestionLabelResults;
 
@@ -97,6 +98,7 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Receive
 				int minGapLimit = _wallet.KeyManager.MinGapLimit.Value;
 				int prevMinGapLimit = minGapLimit - 1;
 				var minGapLimitMessage = $"Minimum gap limit increased from {prevMinGapLimit} to {minGapLimit}.";
+
 				// TODO: notification
 			}
 
@@ -109,8 +111,6 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Receive
 		{
 			Navigate().To(new ReceiveAddressesViewModel(_wallet, Suggestions));
 		}
-
-		public ICommand ShowExistingAddressesCommand { get; }
 
 		protected override void OnNavigatedTo(bool isInHistory, CompositeDisposable disposable)
 		{
