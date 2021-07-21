@@ -91,6 +91,7 @@ namespace WalletWasabi.WabiSabi.Client
 
 			// Register coins.
 			await RegisterCoinsAsync(aliceClients, cancellationToken).ConfigureAwait(false);
+			roundState = await RoundStatusUpdater.CreateRoundAwaiter(roundState => roundState.Phase == Phase.ConnectionConfirmation, cancellationToken).ConfigureAwait(false);
 
 			// Confirm coins.
 			await scheduler.StartConfirmConnectionsAsync(aliceClients, dependencyGraph, roundState.ConnectionConfirmationTimeout, cancellationToken).ConfigureAwait(false);
