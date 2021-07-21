@@ -22,7 +22,7 @@ namespace WalletWasabi.Wallets
 
 		private IMemoryCache Cache { get; }
 
-		public async Task<Block> GetBlockAsync(uint256 blockHash, CancellationToken cancel)
+		public async Task<Block?> GetBlockAsync(uint256 blockHash, CancellationToken cancel)
 		{
 			string cacheKey = $"{nameof(SmartBlockProvider)}:{nameof(GetBlockAsync)}:{blockHash}";
 			var cacheOptions = new MemoryCacheEntryOptions

@@ -62,7 +62,7 @@ namespace WalletWasabi.Wallets
 		/// <param name="hash">The block's hash that identifies the requested block.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The requested bitcoin block.</returns>
-		public async Task<Block> GetBlockAsync(uint256 hash, CancellationToken cancellationToken)
+		public async Task<Block?> GetBlockAsync(uint256 hash, CancellationToken cancellationToken)
 		{
 			Block? block = null;
 			try
