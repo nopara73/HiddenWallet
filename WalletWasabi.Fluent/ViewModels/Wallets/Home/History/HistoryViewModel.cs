@@ -62,17 +62,7 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.History
 			if (txnItem is { })
 			{
 				SelectedItem = txnItem;
-				SelectedItem.IsSelected = true;
-
-				RxApp.MainThreadScheduler.Schedule(async () =>
-				{
-					await Task.Delay(1260);
-
-					if (SelectedItem is { } item)
-					{
-						item.IsSelected = false;
-					}
-				});
+				SelectedItem.IsFlashing = true;
 			}
 		}
 

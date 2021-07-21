@@ -42,7 +42,7 @@
 
                 <Rectangle Name="BackgroundRectangle"
                            Grid.RowSpan="2"
-                           Grid.ColumnSpan="2" x:CompileBindings="False" Classes.selectAnimation="{Binding IsSelected}" />
+                           Grid.ColumnSpan="2" x:CompileBindings="False" Classes.selectAnimation="{Binding IsFlashing}" />
                 <Rectangle x:Name="InvalidVisualElement"
                            Grid.ColumnSpan="2"
                            Fill="{DynamicResource DataGridRowInvalidBrush}" />

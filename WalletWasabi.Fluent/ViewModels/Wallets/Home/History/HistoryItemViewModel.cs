@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using NBitcoin;
 using ReactiveUI;
@@ -13,7 +15,7 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.History
 {
 	public partial class HistoryItemViewModel : ViewModelBase
 	{
-		[AutoNotify] private bool _isSelected;
+		[AutoNotify] private bool _isFlashing;
 		[AutoNotify] private bool _isConfirmed;
 		[AutoNotify] private int _orderIndex;
 		[AutoNotify] private DateTimeOffset _date;
@@ -43,6 +45,14 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.History
 			FilteredLabel = transactionSummary.Label.Skip(1).ToList();
 
 			ShowDetailsCommand = ReactiveCommand.Create(() => RoutableViewModel.Navigate(NavigationTarget.DialogScreen).To(new TransactionDetailsViewModel(transactionSummary, walletViewModel.Wallet, updateTrigger)));
+
+			this.WhenAnyValue(x => x.IsFlashing)
+				.Where(x => x)
+				.Subscribe(async _ =>
+				{
+					await Task.Delay(1260);
+					IsFlashing = false;
+				});
 		}
 
 		public ICommand ShowDetailsCommand { get; }
