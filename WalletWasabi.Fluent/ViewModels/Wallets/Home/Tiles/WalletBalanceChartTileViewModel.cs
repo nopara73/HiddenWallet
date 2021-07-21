@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Disposables;
+using Avalonia.Animation.Easings;
+using Avalonia.Threading;
 using DynamicData.Binding;
 using NBitcoin;
 using WalletWasabi.Fluent.Helpers;
 using WalletWasabi.Fluent.Models;
+using WalletWasabi.Fluent.Morph;
 using WalletWasabi.Fluent.ViewModels.Wallets.Home.History;
 
 namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.Tiles
@@ -14,6 +17,7 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.Tiles
 	public partial class WalletBalanceChartTileViewModel : TileViewModel
 	{
 		private readonly ObservableCollection<HistoryItemViewModel> _history;
+		private DispatcherTimer? _timer;
 		[AutoNotify] private ObservableCollection<double> _yValues;
 		[AutoNotify] private ObservableCollection<double> _xValues;
 		[AutoNotify] private double? _xMinimum;
@@ -96,6 +100,12 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.Tiles
 
 		private void UpdateSample(TimeSpan sampleTime, TimeSpan sampleBackFor)
 		{
+			if (_timer is not null)
+			{
+				_timer.Stop();
+				_timer = null;
+			}
+
 			var sampleLimit = DateTimeOffset.Now - sampleBackFor;
 
 			XMinimum = sampleLimit.ToUnixTimeMilliseconds();
@@ -107,18 +117,30 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.Tiles
 				sampleLimit,
 				DateTime.Now);
 
+			var source = new PolyLine()
+			{
+				XValues = new ObservableCollection<double>(XValues),
+				YValues = new ObservableCollection<double>(YValues)
+			};
+
+			var target = new PolyLine()
+			{
+				XValues = new ObservableCollection<double>(),
+				YValues = new ObservableCollection<double>()
+			};
+
 			XValues.Clear();
 			YValues.Clear();
 
 			foreach (var (timestamp, balance) in values.Reverse())
 			{
-				YValues.Add((double)balance.ToDecimal(MoneyUnit.BTC));
-				XValues.Add(timestamp.ToUnixTimeMilliseconds());
+				target.YValues.Add((double)balance.ToDecimal(MoneyUnit.BTC));
+				target.XValues.Add(timestamp.ToUnixTimeMilliseconds());
 			}
 
-			if (YValues.Any())
+			if (target.YValues.Any())
 			{
-				var maxY = YValues.Max();
+				var maxY = target.YValues.Max();
 				YLabels = new List<string> { "0", (maxY / 2).ToString("F2"), maxY.ToString("F2") };
 			}
 			else
@@ -126,10 +148,10 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.Tiles
 				YLabels = null;
 			}
 
-			if (XValues.Any())
+			if (target.XValues.Any())
 			{
-				var minX = XValues.Min();
-				var maxX = XValues.Max();
+				var minX = target.XValues.Min();
+				var maxX = target.XValues.Max();
 				var halfX = minX + ((maxX - minX) / 2);
 
 				var range = DateTimeOffset.FromUnixTimeMilliseconds((long)maxX) -
@@ -166,6 +188,44 @@ namespace WalletWasabi.Fluent.ViewModels.Wallets.Home.Tiles
 			else
 			{
 				XLabels = null;
+			}
+
+			UpdateValues(source, target);
+		}
+
+		private void UpdateValues(PolyLine source, PolyLine target)
+		{
+			if (source.XValues.Count > 0 && target.XValues.Count > 0)
+			{
+				const double Speed = 0.05;
+				const int Frames = (int) (1 / Speed);
+
+				// TODO:
+				// source.Normalize();
+				// target.Normalize();
+
+				var easing = new SplineEasing();
+				var cache = PolyLineMorph.ToCache(source, target, Speed, easing);
+				var frame = 0;
+
+				_timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1 / 60.0) };
+				_timer.Tick += (sender, e) =>
+				{
+					XValues = cache[frame].XValues;
+					YValues = cache[frame].YValues;
+
+					frame++;
+					if (frame == Frames)
+					{
+						_timer?.Stop();
+					}
+				};
+				_timer?.Start();
+			}
+			else
+			{
+				XValues = target.XValues;
+				YValues = target.YValues;
 			}
 		}
 	}
